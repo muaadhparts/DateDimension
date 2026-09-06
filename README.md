@@ -14,6 +14,11 @@ Bilingual Arabic/English date and time information site. Responsive RTL/LTR inte
 Node >=22.13. `npm ci`, `npm run dev`, `npm run build`.
 The project uses React, TypeScript, Vinext and Cloudflare Workers. `npm run build` produces `dist/server/index.js` and client assets. Preserve the Sites Vite build plugin and generated hosting metadata for Sites deployments.
 
+## Self-hosted deployment (Laravel Forge)
+`next.config.ts` sets `output: "standalone"`, which only adds `dist/standalone/` to the same build; `dist/server/index.js` and `dist/client` are unchanged, so Cloudflare Sites deployments keep working. The standalone bundle carries its own `node_modules` and is started on plain Node with `node dist/standalone/server.js`.
+
+On Forge the release is built with `npm ci && npm run build`, the build-only `node_modules` is then removed, and a daemon runs `dist/standalone/server.js` on `127.0.0.1:3200` behind the site's nginx reverse proxy. `PORT`, `HOST`, `SITE_URL` and `PUBLIC_INDEXING` come from the daemon environment, since the standalone server reads them at runtime, not at build time.
+
 ## Public launch
 The delivered preview is private by default and therefore intentionally not indexable. On the public production host configure `SITE_URL` with the final HTTPS domain and `PUBLIC_INDEXING=true`, then rebuild/deploy. Confirm the public host has no login gate, verify `/robots.txt`, `/sitemap.xml`, canonicals and hreflang use the final domain, and check representative routes with Google Search Console URL Inspection. Submit the sitemap after verifying domain ownership. No Search Console ownership is assumed or fabricated.
 
