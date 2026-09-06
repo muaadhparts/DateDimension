@@ -1,4 +1,4 @@
-# Yawmak Now | يومك الآن
+# Your Day Now | يومك الآن
 
 Bilingual Arabic/English date and time information site. Responsive RTL/LTR interface with a lightweight interactive clock, server-rendered content and focused routes.
 
