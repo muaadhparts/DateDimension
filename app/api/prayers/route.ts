@@ -1,0 +1,2 @@
+import {getPrayers} from '@/lib/prayers';
+export async function GET(request:Request){try{const data=await getPrayers(new URL(request.url).searchParams);return Response.json({data},{headers:{'Cache-Control':'private, max-age=300','X-Robots-Tag':'noindex'}})}catch(error){const invalid=error instanceof Error&&error.message.startsWith('Invalid');return Response.json({error:invalid?'Invalid search parameters':'Prayer data unavailable'},{status:invalid?400:503,headers:{'Cache-Control':'no-store','X-Robots-Tag':'noindex'}})}}
