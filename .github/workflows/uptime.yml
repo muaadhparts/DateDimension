@@ -1,0 +1,69 @@
+name: Uptime
+
+# A backstop, not the primary alarm: GitHub delays scheduled workflows under
+# load and disables them after 60 days of repository inactivity. An external
+# monitor on the same endpoint is the thing that should page.
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ask the site how it is
+        id: probe
+        run: |
+          body=$(curl -fsS --max-time 20 https://yourdaynow.online/api/health) || {
+            echo "reason=the health endpoint did not answer" >> "$GITHUB_OUTPUT"
+            exit 1
+          }
+          echo "$body"
+          case "$body" in
+            *'"status":"ok"'*) ;;
+            *) echo "reason=the site reports $body" >> "$GITHUB_OUTPUT"; exit 1 ;;
+          esac
+
+          # A page, not just the API: the daemon can answer /api/health while
+          # rendering is broken.
+          code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 https://yourdaynow.online/ar)
+          [ "$code" = "200" ] || {
+            echo "reason=/ar answered $code" >> "$GITHUB_OUTPUT"
+            exit 1
+          }
+
+      - name: Open or update an issue when it is not
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'yourdaynow.online is not answering';
+            const reason = `${{ steps.probe.outputs.reason || 'the check failed' }}`;
+            const body = `The uptime check failed at ${new Date().toISOString()}: ${reason}.\n\n[Run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+            const {data: open} = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'uptime',
+            });
+            if (open.length > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: open[0].number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['uptime'],
+              });
+            }
