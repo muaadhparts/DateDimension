@@ -118,7 +118,11 @@ function subscribeToStoredZone(listener: Listener) {
 
 /** The visitor's remembered time zone, or null on the server and first paint. */
 export function useStoredZone(): string | null {
-  return useSyncExternalStore(subscribeToStoredZone, () => storedZone ?? null, () => null);
+  return useSyncExternalStore(
+    subscribeToStoredZone,
+    () => storedZone ?? null,
+    () => null,
+  );
 }
 
 export function storeZone(zone: string): void {

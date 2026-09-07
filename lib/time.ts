@@ -4,7 +4,11 @@ function elapsedFormatter(zone: string): Intl.DateTimeFormat {
   let found = elapsedFormatters.get(zone);
   if (!found) {
     found = new Intl.DateTimeFormat('en-GB', {
-      timeZone: zone, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+      timeZone: zone,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hourCycle: 'h23',
     });
     elapsedFormatters.set(zone, found);
   }
@@ -31,7 +35,10 @@ export function secondsUntilMidnight(zone: string, now: Date = new Date()): numb
 }
 
 /** The soonest midnight across several zones, for pages that show more than one. */
-export function secondsUntilFirstMidnight(zones: readonly string[], now: Date = new Date()): number {
+export function secondsUntilFirstMidnight(
+  zones: readonly string[],
+  now: Date = new Date(),
+): number {
   if (zones.length === 0) return DAY;
   return Math.min(...zones.map((zone) => secondsUntilMidnight(zone, now)));
 }

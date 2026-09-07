@@ -60,7 +60,10 @@ const nextConfig: NextConfig = {
           {key: 'Content-Security-Policy', value: CSP},
           {key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin'},
           // geolocation stays enabled: "use my location" depends on it.
-          {key: 'Permissions-Policy', value: 'geolocation=(self), camera=(), microphone=(), payment=()'},
+          {
+            key: 'Permissions-Policy',
+            value: 'geolocation=(self), camera=(), microphone=(), payment=()',
+          },
           {key: 'X-Content-Type-Options', value: 'nosniff'},
           {key: 'Cross-Origin-Opener-Policy', value: 'same-origin'},
           {key: 'Strict-Transport-Security', value: 'max-age=15552000'},

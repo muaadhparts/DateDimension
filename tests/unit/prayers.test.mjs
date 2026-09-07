@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {getCityPrayerTimes, getPrayerTimes, parsePrayerQuery, InvalidPrayerRequest} from '../../lib/prayers/index.ts';
+import {
+  getCityPrayerTimes,
+  getPrayerTimes,
+  parsePrayerQuery,
+  InvalidPrayerRequest,
+} from '../../lib/prayers/index.ts';
 
 const KEYS = ['Fajr', 'Sunrise', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
 const minutes = (value) => {
@@ -11,9 +16,45 @@ const minutes = (value) => {
 /** Recorded from api.aladhan.com on 2026-09-07; tolerance is 4 minutes, the
  * documented divergence between adhan's solar model and the provider's. */
 const REFERENCE = [
-  {slug: 'makkah', method: '3', school: '0', expected: {Fajr: '04:51', Sunrise: '06:06', Dhuhr: '12:19', Asr: '15:45', Maghrib: '18:32', Isha: '19:42'}},
-  {slug: 'riyadh', method: '4', school: '0', expected: {Fajr: '04:17', Sunrise: '05:36', Dhuhr: '11:51', Asr: '15:20', Maghrib: '18:06', Isha: '19:36'}},
-  {slug: 'london', method: '3', school: '0', expected: {Fajr: '04:22', Sunrise: '06:23', Dhuhr: '12:59', Asr: '16:36', Maghrib: '19:34', Isha: '21:26'}},
+  {
+    slug: 'makkah',
+    method: '3',
+    school: '0',
+    expected: {
+      Fajr: '04:51',
+      Sunrise: '06:06',
+      Dhuhr: '12:19',
+      Asr: '15:45',
+      Maghrib: '18:32',
+      Isha: '19:42',
+    },
+  },
+  {
+    slug: 'riyadh',
+    method: '4',
+    school: '0',
+    expected: {
+      Fajr: '04:17',
+      Sunrise: '05:36',
+      Dhuhr: '11:51',
+      Asr: '15:20',
+      Maghrib: '18:06',
+      Isha: '19:36',
+    },
+  },
+  {
+    slug: 'london',
+    method: '3',
+    school: '0',
+    expected: {
+      Fajr: '04:22',
+      Sunrise: '06:23',
+      Dhuhr: '12:59',
+      Asr: '16:36',
+      Maghrib: '19:34',
+      Isha: '21:26',
+    },
+  },
 ];
 
 test('Curated cities match the published timetable within four minutes', () => {
@@ -23,19 +64,34 @@ test('Curated cities match the published timetable within four minutes', () => {
     assert.equal(data.meta.source, 'local');
     for (const key of KEYS) {
       const delta = Math.abs(minutes(data.timings[key]) - minutes(expected[key]));
-      assert.ok(delta <= 4, `${slug} ${key}: got ${data.timings[key]}, expected about ${expected[key]}`);
+      assert.ok(
+        delta <= 4,
+        `${slug} ${key}: got ${data.timings[key]}, expected about ${expected[key]}`,
+      );
     }
   }
 });
 
 test('Prayer times stay in order and carry the location metadata', () => {
-  for (const slug of ['riyadh', 'makkah', 'cairo', 'dubai', 'sanaa', 'london', 'new-york', 'jakarta']) {
+  for (const slug of [
+    'riyadh',
+    'makkah',
+    'cairo',
+    'dubai',
+    'sanaa',
+    'london',
+    'new-york',
+    'jakarta',
+  ]) {
     for (const date of ['2026-09-07', '2026-12-21', '2027-06-21']) {
       const data = getCityPrayerTimes(slug, date);
       assert.ok(data, slug);
       const order = KEYS.map((key) => minutes(data.timings[key]));
       for (let i = 1; i < order.length; i++) {
-        assert.ok(order[i] > order[i - 1], `${slug} ${date}: ${KEYS[i]} must follow ${KEYS[i - 1]}`);
+        assert.ok(
+          order[i] > order[i - 1],
+          `${slug} ${date}: ${KEYS[i]} must follow ${KEYS[i - 1]}`,
+        );
       }
       assert.match(data.timings.Fajr, /^\d{2}:\d{2}$/);
       assert.equal(typeof data.meta.timezone, 'string');
@@ -96,14 +152,18 @@ test('A known city never reaches the network', async () => {
   };
   try {
     const data = await getPrayerTimes({
-      date: '2026-09-07', method: '3', school: '0',
+      date: '2026-09-07',
+      method: '3',
+      school: '0',
       location: {kind: 'query', city: 'Riyadh', country: 'Saudi Arabia'},
     });
     assert.equal(data.meta.source, 'local');
     assert.equal(data.meta.timezone, 'Asia/Riyadh');
 
     const byCoords = await getPrayerTimes({
-      date: '2026-09-07', method: '3', school: '0',
+      date: '2026-09-07',
+      method: '3',
+      school: '0',
       location: {kind: 'coords', lat: 51.5074, lon: -0.1278, zone: 'Europe/London'},
     });
     assert.equal(byCoords.meta.timezone, 'Europe/London');

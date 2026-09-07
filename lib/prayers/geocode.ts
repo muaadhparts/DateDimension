@@ -13,8 +13,12 @@ const MAX_MEMO = 500;
 const memo = new Map<string, CityCoordinates>();
 
 type GeocodingResult = {
-  latitude?: number; longitude?: number; timezone?: string;
-  country?: string; country_code?: string; population?: number;
+  latitude?: number;
+  longitude?: number;
+  timezone?: string;
+  country?: string;
+  country_code?: string;
+  population?: number;
 };
 
 /** The geocoder answers with the country's current official name, which is not
@@ -40,7 +44,8 @@ function remember(key: string, value: CityCoordinates): CityCoordinates {
  * prayer times themselves are always computed locally from what it returns.
  */
 export async function geocodeCity(city: string, country: string): Promise<CityCoordinates> {
-  if (process.env.PRAYERS_ALLOW_REMOTE === 'false') throw new PrayerDataUnavailable('Unknown location');
+  if (process.env.PRAYERS_ALLOW_REMOTE === 'false')
+    throw new PrayerDataUnavailable('Unknown location');
 
   const key = `${normalise(city)}|${normalise(country)}`;
   const cached = memo.get(key);

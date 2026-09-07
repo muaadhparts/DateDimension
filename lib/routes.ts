@@ -27,12 +27,18 @@ export const ROUTES: readonly RouteContent[] = [
     key: '',
     nav: ['اليوم', 'Today'],
     title: ['تاريخ اليوم والوقت الآن', 'Today’s date & current time'],
-    metaTitle: ['تاريخ اليوم هجري وميلادي والوقت الآن', 'Today’s Hijri and Gregorian date & current time'],
+    metaTitle: [
+      'تاريخ اليوم هجري وميلادي والوقت الآن',
+      'Today’s Hijri and Gregorian date & current time',
+    ],
     description: [
       'تاريخ اليوم هجري وميلادي والوقت الآن حسب منطقتك الزمنية، مع اسم الشهر وعدد أيامه والتقويم واختصارات تحويل التاريخ والصلاة.',
       'Today’s Hijri and Gregorian date, live local time, month names, days remaining and calendar, with date conversion and prayer tools.',
     ],
-    intro: ['لحظتك الحالية، بين تقويمين. كل ما تحتاجه في نظرة.', 'Your moment, in two calendars. Everything at a glance.'],
+    intro: [
+      'لحظتك الحالية، بين تقويمين. كل ما تحتاجه في نظرة.',
+      'Your moment, in two calendars. Everything at a glance.',
+    ],
     hasCityPages: false,
   },
   {
@@ -44,7 +50,10 @@ export const ROUTES: readonly RouteContent[] = [
       'حوّل التاريخ من هجري إلى ميلادي والعكس وفق أم القرى. أدخل اليوم والشهر والسنة لتحصل على النتيجة مباشرة.',
       'Convert Hijri to Gregorian and Gregorian to Hijri using Umm al-Qura. Enter a date for an immediate result.',
     ],
-    intro: ['من الهجري إلى الميلادي والعكس، وفق تقويم أم القرى.', 'Convert both ways using the Umm al-Qura calendar.'],
+    intro: [
+      'من الهجري إلى الميلادي والعكس، وفق تقويم أم القرى.',
+      'Convert both ways using the Umm al-Qura calendar.',
+    ],
     hasCityPages: false,
   },
   {
@@ -68,7 +77,10 @@ export const ROUTES: readonly RouteContent[] = [
       'مواعيد رمضان وعيد الفطر ويوم عرفة وعيد الأضحى والمناسبات الإسلامية القادمة وفق أم القرى، مع توضيح اختلاف الرؤية المحلية.',
       'Upcoming Ramadan, Eid al-Fitr, Arafah and Eid al-Adha dates using Umm al-Qura, with local observation caveats.',
     ],
-    intro: ['تواريخ حسابية للمناسبات القادمة، مع مراعاة الرؤية المحلية.', 'Calculated dates for upcoming occasions; local observation may differ.'],
+    intro: [
+      'تواريخ حسابية للمناسبات القادمة، مع مراعاة الرؤية المحلية.',
+      'Calculated dates for upcoming occasions; local observation may differ.',
+    ],
     hasCityPages: false,
   },
   {
@@ -80,7 +92,10 @@ export const ROUTES: readonly RouteContent[] = [
       'أسماء الأشهر الميلادية بالعربية والإنجليزية ومسمياتها في الشام والعراق والمغرب العربي، وأسماء الأشهر الهجرية وعدد الأيام.',
       'Gregorian month names in English and Arabic, Levantine and Maghreb variants, plus Hijri months and month lengths.',
     ],
-    intro: ['المسميات العربية والإقليمية والإنجليزية، في مكان واحد.', 'Arabic, regional and English names, together.'],
+    intro: [
+      'المسميات العربية والإقليمية والإنجليزية، في مكان واحد.',
+      'Arabic, regional and English names, together.',
+    ],
     hasCityPages: false,
   },
   {

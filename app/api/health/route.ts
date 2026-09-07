@@ -13,7 +13,9 @@ export async function GET() {
       status: configured ? 'ok' : 'degraded',
       commit: process.env.APP_COMMIT ?? 'unknown',
       builtAt: process.env.APP_BUILT_AT ?? null,
-      runtime: (globalThis as {process?: {versions?: {node?: string}}}).process?.versions?.node ? 'node' : 'workers',
+      runtime: (globalThis as {process?: {versions?: {node?: string}}}).process?.versions?.node
+        ? 'node'
+        : 'workers',
       siteUrl: SITE_URL,
       indexable: INDEXABLE,
       // False when SITE_URL is missing: the site would still serve, but every

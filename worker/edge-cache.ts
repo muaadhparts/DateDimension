@@ -48,9 +48,17 @@ export function isRscRequest(request: Request): boolean {
  * override: vinext answers `no-store` on a cache miss, which would leave every
  * cold page uncacheable at the edge.
  */
-export function applyEdgeCache(pathname: string, response: Response, now: Date = new Date()): Response {
+export function applyEdgeCache(
+  pathname: string,
+  response: Response,
+  now: Date = new Date(),
+): Response {
   if (response.status !== 200) return response;
-  if (!response.headers.get('content-type')?.startsWith('text/html') && !pathname.endsWith('.xml') && pathname !== '/robots.txt') {
+  if (
+    !response.headers.get('content-type')?.startsWith('text/html') &&
+    !pathname.endsWith('.xml') &&
+    pathname !== '/robots.txt'
+  ) {
     return response;
   }
   const policy = policyFor(pathname, now);
@@ -61,5 +69,9 @@ export function applyEdgeCache(pathname: string, response: Response, now: Date =
     'Cache-Control',
     `public, max-age=0, s-maxage=${policy.sMaxAge}, stale-while-revalidate=${policy.staleWhileRevalidate}`,
   );
-  return new Response(response.body, {status: response.status, statusText: response.statusText, headers});
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }

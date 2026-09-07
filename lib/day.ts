@@ -4,7 +4,11 @@ import {localeOf, type Lang} from './i18n.ts';
 const formatters = new Map<string, Intl.DateTimeFormat>();
 
 /** Cached, because the clock used to build a new formatter on every tick. */
-export function formatDate(lang: Lang, date: Date, options: Intl.DateTimeFormatOptions = {dateStyle: 'long'}): string {
+export function formatDate(
+  lang: Lang,
+  date: Date,
+  options: Intl.DateTimeFormatOptions = {dateStyle: 'long'},
+): string {
   const key = lang + JSON.stringify(options);
   let formatter = formatters.get(key);
   if (!formatter) {
@@ -44,7 +48,11 @@ export function dayView(lang: Lang, today: string): DayView {
 
   let hijriDays = 30;
   try {
-    const next = fromHijri(h.month === 12 ? h.year + 1 : h.year, h.month === 12 ? 1 : h.month + 1, 1);
+    const next = fromHijri(
+      h.month === 12 ? h.year + 1 : h.year,
+      h.month === 12 ? 1 : h.month + 1,
+      1,
+    );
     hijriDays = (next.getTime() - fromHijri(h.year, h.month, 1).getTime()) / 86_400_000;
   } catch {
     /* outside 1356–1500 AH: keep the conventional 30 */

@@ -34,7 +34,9 @@ test('Every route class gets a policy, and unknown paths get none', () => {
 test('RSC navigations are never served from the shared cache', () => {
   const plain = new Request('https://yourdaynow.online/ar');
   const rsc = new Request('https://yourdaynow.online/ar', {headers: {RSC: '1'}});
-  const prefetch = new Request('https://yourdaynow.online/ar', {headers: {'Next-Router-Prefetch': '1'}});
+  const prefetch = new Request('https://yourdaynow.online/ar', {
+    headers: {'Next-Router-Prefetch': '1'},
+  });
   assert.equal(isRscRequest(plain), false);
   assert.equal(isRscRequest(rsc), true);
   assert.equal(isRscRequest(prefetch), true);

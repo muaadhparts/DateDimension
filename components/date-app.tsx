@@ -31,7 +31,7 @@ export default function DateApp({lang, page, initialDate, citySlug, initialPraye
   const routeZone = cities.find((c) => c.slug === citySlug)?.zone || 'Asia/Riyadh';
   const storedZone = useStoredZone();
   const [chosenZone, setChosenZone] = useState<string | null>(null);
-  const zone = chosenZone ?? (citySlug ? routeZone : storedZone ?? routeZone);
+  const zone = chosenZone ?? (citySlug ? routeZone : (storedZone ?? routeZone));
   const setTimezone = (value: string) => {
     setChosenZone(value);
     storeZone(value);
@@ -56,7 +56,13 @@ export default function DateApp({lang, page, initialDate, citySlug, initialPraye
       )}
       {page === 'converter' && <ConverterPage ar={view.ar} date={view.date} />}
       {page === 'prayer-times' && (
-        <PrayersPage ar={view.ar} lang={lang} date={view.date} citySlug={citySlug} initial={initialPrayer} />
+        <PrayersPage
+          ar={view.ar}
+          lang={lang}
+          date={view.date}
+          citySlug={citySlug}
+          initial={initialPrayer}
+        />
       )}
       {page === 'occasions' && <OccasionsPage ar={view.ar} date={view.date} />}
       {page === 'months' && <MonthsPage view={view} />}

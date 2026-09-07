@@ -5,7 +5,8 @@ export const DEFAULT_LANG: Lang = 'ar';
 /** A string in both languages: [Arabic, English]. */
 export type Bi = readonly [ar: string, en: string];
 
-export const isLang = (value: string): value is Lang => (LANGS as readonly string[]).includes(value);
+export const isLang = (value: string): value is Lang =>
+  (LANGS as readonly string[]).includes(value);
 export const dirOf = (lang: Lang) => (lang === 'ar' ? 'rtl' : 'ltr');
 export const localeOf = (lang: Lang) => (lang === 'ar' ? 'ar-SA-u-ca-gregory-nu-latn' : 'en-GB');
 export const ogLocaleOf = (lang: Lang) => (lang === 'ar' ? 'ar_SA' : 'en_GB');
