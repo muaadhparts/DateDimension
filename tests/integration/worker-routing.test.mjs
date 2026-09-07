@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-const {default:worker}=await import('../dist/server/index.js');
+const {default:worker}=await import('../../dist/server/index.js');
 async function request(path){return worker.fetch(new Request('https://date-dimension.atwjry.chatgpt.site'+path,{headers:{accept:'text/html'}}),{ASSETS:{fetch:async()=>new Response('Not found',{status:404})}},{waitUntil(){},passThroughOnException(){}})}
 test('Root redirects and unknown routes are actual 404s',async()=>{const root=await request('/');assert.ok([301,308].includes(root.status));assert.match(root.headers.get('location'),/\/ar$/);for(const p of ['/fr','/ar/not-a-page','/en/prayer-times/unknown','/ar/months/extra'])assert.equal((await request(p)).status,404,p)});
 test('Arabic and English content, direction, canonical, hreflang and structured data are server rendered',async()=>{for(const lang of ['ar','en']){const r=await request('/'+lang);assert.equal(r.status,200);const s=await r.text();assert.match(s,new RegExp(`<html[^>]*lang="${lang}"`));assert.match(s,new RegExp(`dir="${lang==='ar'?'rtl':'ltr'}"`));assert.match(s,/rel="canonical"/);assert.match(s,/hrefLang="ar"|hreflang="ar"/);assert.match(s,/hrefLang="en"|hreflang="en"/);assert.match(s,/application\/ld\+json/);assert.match(s,lang==='ar'?/تاريخ اليوم والوقت الآن/:/Today’s date/);assert.doesNotMatch(s,/Starter Project|codex-preview/);}});

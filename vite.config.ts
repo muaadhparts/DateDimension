@@ -14,6 +14,13 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
+  // Workers have no process environment, so these have to be baked into the
+  // generated wrangler config. Without them lib/site.ts falls back to its
+  // default and the Cloudflare origin emits canonicals for the wrong host.
+  vars: {
+    SITE_URL: process.env.SITE_URL ?? "https://yourdaynow.online",
+    PUBLIC_INDEXING: process.env.PUBLIC_INDEXING ?? "true",
+  },
   d1_databases: d1
     ? [
         {

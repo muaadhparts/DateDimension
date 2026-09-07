@@ -37,9 +37,12 @@ yarn-error.log*
 next-env.d.ts
 /dist/
 /.wrangler/
-/.sites-runtime/
+.sites-runtime/
 /outputs/
 /work/
 
 *.tsbuildinfo
 !.env.example
+
+# local Claude Code permissions
+.claude/settings.local.json

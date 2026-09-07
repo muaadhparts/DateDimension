@@ -1,0 +1,109 @@
+'use client';
+import {useCallback, useSyncExternalStore} from 'react';
+import {dateInZone} from '@/lib/calendar';
+
+type Listener = () => void;
+
+/**
+ * One timer per tick rate for the whole page, shared by every subscriber.
+ * The server snapshot is deliberately empty so no timestamp is ever baked
+ * into the HTML: that is what makes the pages cacheable.
+ */
+function ticker(intervalMs: number) {
+  const listeners = new Set<Listener>();
+  let timer: ReturnType<typeof setInterval> | null = null;
+  let snapshot = 0;
+
+  const tick = () => {
+    snapshot = Math.floor(Date.now() / 1000) * 1000;
+    for (const listener of listeners) listener();
+  };
+
+  return {
+    subscribe(listener: Listener) {
+      listeners.add(listener);
+      if (!timer) {
+        tick();
+        timer = setInterval(tick, intervalMs);
+      }
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0 && timer) {
+          clearInterval(timer);
+          timer = null;
+        }
+      };
+    },
+    getSnapshot: () => snapshot,
+  };
+}
+
+const perSecond = ticker(1000);
+const perHalfMinute = ticker(30_000);
+
+/** Milliseconds at second resolution, or 0 before the first client tick. */
+export function useNow(): number {
+  return useSyncExternalStore(perSecond.subscribe, perSecond.getSnapshot, () => 0);
+}
+
+export function civilDate(instant: Date, zone: string): string {
+  return dateInZone(instant, zone).toISOString().slice(0, 10);
+}
+
+/**
+ * The calendar day in `zone` as 'YYYY-MM-DD'. Re-renders only when the day
+ * actually rolls over, not on every tick, because the snapshot is a string.
+ */
+export function useCivilDate(zone: string, serverDate: string): string {
+  const getSnapshot = useCallback(() => {
+    const now = perHalfMinute.getSnapshot();
+    return now === 0 ? serverDate : civilDate(new Date(now), zone);
+  }, [zone, serverDate]);
+  const getServerSnapshot = useCallback(() => serverDate, [serverDate]);
+  return useSyncExternalStore(perHalfMinute.subscribe, getSnapshot, getServerSnapshot);
+}
+
+const ZONE_KEY = 'dd-zone';
+const zoneListeners = new Set<Listener>();
+
+function readStoredZone(): string | null {
+  try {
+    const stored = localStorage.getItem(ZONE_KEY);
+    if (!stored) return null;
+    new Intl.DateTimeFormat('en', {timeZone: stored}).format();
+    return stored;
+  } catch {
+    return null;
+  }
+}
+
+let storedZone: string | null | undefined;
+
+function subscribeToStoredZone(listener: Listener) {
+  zoneListeners.add(listener);
+  if (storedZone === undefined) storedZone = readStoredZone();
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== ZONE_KEY) return;
+    storedZone = readStoredZone();
+    for (const l of zoneListeners) l();
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    zoneListeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
+/** The visitor's remembered time zone, or null on the server and first paint. */
+export function useStoredZone(): string | null {
+  return useSyncExternalStore(subscribeToStoredZone, () => storedZone ?? null, () => null);
+}
+
+export function storeZone(zone: string): void {
+  try {
+    localStorage.setItem(ZONE_KEY, zone);
+    storedZone = zone;
+  } catch {
+    /* private browsing keeps the choice for this page view only */
+  }
+}

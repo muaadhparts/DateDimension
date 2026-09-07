@@ -6,13 +6,25 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   // Override default ignores of eslint-config-next.
+  // Only build artifacts. eslint-config-next ignores build/** by Next convention,
+  // but here build/ holds first-party source (the Sites Vite plugin).
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
-    "build/**",
+    "dist/**",
+    ".wrangler/**",
+    ".sites-runtime/**",
     "next-env.d.ts",
   ]),
+  {
+    // Cross-language links must be full page loads: a soft navigation between
+    // /ar and /en re-renders the [lang] layout but leaves the <html lang> and
+    // dir attributes stale, which breaks direction for the whole document.
+    files: ["app/**/not-found.tsx", "components/**/*.tsx"],
+    rules: {
+      "@next/next/no-html-link-for-pages": "off",
+    },
+  },
   {
     files: ["components/ui/**/*.{ts,tsx}", "hooks/use-mobile.ts"],
     rules: {
