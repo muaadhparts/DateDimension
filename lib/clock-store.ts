@@ -63,6 +63,28 @@ export function useCivilDate(zone: string, serverDate: string): string {
   return useSyncExternalStore(perHalfMinute.subscribe, getSnapshot, getServerSnapshot);
 }
 
+let supportedZones: string[] | undefined;
+
+/**
+ * The full IANA list, but only in the browser: rendering 400+ options into the
+ * HTML would triple the page for a control most visitors never open.
+ */
+export function useSupportedZones(fallback: readonly string[]): readonly string[] {
+  return useSyncExternalStore(
+    subscribeToStoredZone,
+    () => (supportedZones ??= readSupportedZones(fallback)),
+    () => fallback,
+  );
+}
+
+function readSupportedZones(fallback: readonly string[]): string[] {
+  try {
+    return Intl.supportedValuesOf('timeZone') as string[];
+  } catch {
+    return [...fallback];
+  }
+}
+
 const ZONE_KEY = 'dd-zone';
 const zoneListeners = new Set<Listener>();
 
