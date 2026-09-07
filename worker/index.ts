@@ -23,20 +23,13 @@ interface ExecutionContext {
   passThroughOnException(): void;
 }
 
-// First path segments the app itself owns. Anything else is rewritten under the
-// default language so it renders a real 404 inside a lang-aware <html> element.
-const PASSTHROUGH = new Set([
-  'ar',
-  'en',
-  'api',
-  'assets',
-  '_vinext',
-  '__vinext',
-  'robots.txt',
-  'sitemap.xml',
-  'favicon.svg',
-  'favicon.ico',
-]);
+// Path prefixes the app itself owns. Anything else that looks like a page is
+// rewritten under the default language so it renders a real 404 inside a
+// lang-aware <html> element. A first segment containing a dot is a file —
+// icons, the manifest, robots.txt — and is left alone.
+const PASSTHROUGH = new Set(['ar', 'en', 'api', 'assets', '_vinext', '__vinext']);
+
+const isFile = (segment: string) => segment.includes('.');
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -68,7 +61,7 @@ const worker = {
 
     const segment = url.pathname.split('/')[1];
     const outgoing =
-      segment && !PASSTHROUGH.has(segment)
+      segment && !PASSTHROUGH.has(segment) && !isFile(segment)
         ? new Request(new URL(`/ar${url.pathname}${url.search}`, url), request)
         : request;
 

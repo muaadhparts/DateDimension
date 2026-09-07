@@ -186,3 +186,51 @@ test('The prayer API distinguishes a bad request from an unavailable provider', 
     globalThis.fetch = realFetch;
   }
 });
+
+test('Static files reach the asset store instead of being rewritten into a 404', async () => {
+  // The unknown-segment rewrite once turned every one of these into the app's
+  // 404 page, because only a hardcoded list of filenames was allowed through.
+  // The asset binding answers here, so anything still rendering HTML is a
+  // request that never got out of the router.
+  const assets = {fetch: async () => new Response('asset', {status: 200})};
+  const fetchWithAssets = (path) =>
+    worker.fetch(new Request(ORIGIN + path), assets, {waitUntil() {}, passThroughOnException() {}});
+
+  for (const path of [
+    '/favicon.svg',
+    '/favicon.ico',
+    '/apple-icon.png',
+    '/icon-192.png',
+    '/icon-512.png',
+    '/og-ar.png',
+    '/og-en.png',
+  ]) {
+    const response = await fetchWithAssets(path);
+    assert.equal(response.status, 200, `${path} is served`);
+    assert.ok(!(await response.text()).includes('<html'), `${path} must not render the app's 404`);
+  }
+
+  const manifest = await request('/manifest.webmanifest', {});
+  assert.equal(manifest.status, 200);
+  const body = await manifest.json();
+  assert.equal(body.start_url, '/ar');
+  assert.equal(body.display, 'standalone');
+  assert.ok(
+    body.icons.some((icon) => icon.purpose === 'maskable'),
+    'a maskable icon is declared',
+  );
+});
+
+test('Social cards point at a real image, in the right locale', async () => {
+  for (const [path, lang, locale] of [
+    ['/ar', 'ar', 'ar_SA'],
+    ['/en', 'en', 'en_GB'],
+  ]) {
+    const body = await html(path);
+    assert.match(body, new RegExp(`property="og:image" content="${ORIGIN}/og-${lang}.png"`));
+    assert.match(body, new RegExp(`property="og:locale" content="${locale}"`));
+    assert.match(body, /name="twitter:card" content="summary_large_image"/);
+    // ar_AR is Argentina, which is what this used to say.
+    assert.ok(!body.includes('ar_AR'), 'the Arabic locale must not be ar_AR');
+  }
+});

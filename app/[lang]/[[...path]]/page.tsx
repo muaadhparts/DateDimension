@@ -88,10 +88,18 @@ export async function generateMetadata({params}: {params: Promise<Params>}): Pro
       description,
       url,
       siteName: 'Your Day Now',
-      locale: ar ? 'ar_AR' : 'en_GB',
+      // ar_AR is Argentina; the Arabic locale for this site is ar_SA.
+      locale: ar ? 'ar_SA' : 'en_GB',
+      alternateLocale: ar ? 'en_GB' : 'ar_SA',
       type: 'website',
+      images: [{url: `${SITE_URL}/og-${p.lang}.png`, width: 1200, height: 630, alt: title}],
     },
-    twitter: {card: 'summary', title, description},
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: [`${SITE_URL}/og-${p.lang}.png`],
+    },
   };
 }
 export default async function Page({params}: {params: Promise<Params>}) {
