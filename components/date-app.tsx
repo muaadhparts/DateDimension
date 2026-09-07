@@ -1,37 +1,66 @@
 'use client';
 import {useState} from 'react';
+import AppShell from '@/components/layout/app-shell';
+import TodayPage from '@/components/pages/today';
+import ConverterPage from '@/components/pages/converter';
+import PrayersPage from '@/components/pages/prayers';
+import OccasionsPage from '@/components/pages/occasions';
+import MonthsPage from '@/components/pages/months';
+import AboutPage from '@/components/pages/about';
+import {useCivilDate, useStoredZone, storeZone} from '@/lib/clock-store';
+import {cities} from '@/lib/calendar';
+import {dayView} from '@/lib/day';
+import type {Lang} from '@/lib/i18n';
 import type {PrayerData} from '@/lib/prayers';
-import ClockPanel from '@/components/clock/clock-panel';
-import WorldClocks from '@/components/clock/world-clocks';
-import SelectField from '@/components/select-field';
-import Converter from '@/components/pages/converter';
-import Prayers from '@/components/pages/prayers';
-import Occasions from '@/components/pages/occasions';
-import {useCivilDate,useStoredZone,storeZone} from '@/lib/clock-store';
-import {Clock3,CalendarDays,ArrowLeftRight,Moon,Globe2,Copy,ArrowUpLeft,ArrowUpRight} from 'lucide-react';
-import type {LucideIcon} from 'lucide-react';
-import {hijri,fromHijri,hijriNames,hijriEnglish,months,english,levant,maghreb,cities,titles} from '@/lib/calendar';
-type Props={lang:string;page:string;initialDate:string;citySlug?:string;initialPrayer?:PrayerData|null};
-export default function DateApp({lang,page,initialDate,citySlug,initialPrayer}:Props){
- const ar=lang==='ar',t=(a:string,b:string)=>ar?a:b,href=(p='')=>`/${lang}${p?'/'+p:''}`;
- const routeZone=cities.find(c=>c.slug===citySlug)?.zone||'Asia/Riyadh';
- const storedZone=useStoredZone();
- const [chosenZone,setChosenZone]=useState<string|null>(null);
- const zone=chosenZone??(citySlug?routeZone:storedZone??routeZone);
- const setTimezone=(v:string)=>{setChosenZone(v);storeZone(v)};
- const [status,setStatus]=useState('');
- const today=useCivilDate(zone,initialDate);
- const date=new Date(today+'T00:00:00Z'),h=hijri(date),month=date.getUTCMonth(),year=date.getUTCFullYear(),day=date.getUTCDate(),days=new Date(Date.UTC(year,month+1,0)).getUTCDate();
- const fmt=(d:Date,opts:Intl.DateTimeFormatOptions={dateStyle:'long'})=>new Intl.DateTimeFormat(ar?'ar-SA-u-ca-gregory-nu-latn':'en-GB',{...opts,timeZone:'UTC'}).format(d);
- let hDays=30;try{hDays=(fromHijri(h.month===12?h.year+1:h.year,h.month===12?1:h.month+1,1).getTime()-fromHijri(h.year,h.month,1).getTime())/86400000}catch{}
- const shortNav=[['',t('اليوم','Today')],['converter',t('تحويل التاريخ','Converter')],['prayer-times',t('مواقيت الصلاة','Prayer times')],['occasions',t('المناسبات','Occasions')],['months',t('الأشهر','Months')]];
- return <div lang={lang} dir={ar?'rtl':'ltr'} className="shell"><a className="skip" href="#main">{t('انتقل إلى المحتوى','Skip to content')}</a><header><a className="brand" href={href()}><Clock3 size={29}/><span>{t('يومك الآن','Your Day Now')}<span className="sub" style={{display:'block',fontSize:11,letterSpacing:3}}>YOUR DAY NOW</span></span></a><nav aria-label={t('التنقل الرئيسي','Main navigation')}>{shortNav.map(([p,n])=><a key={p} className={page===p?'active':''} aria-current={page===p?'page':undefined} href={href(p)}>{n}</a>)}</nav><a className="language" href={`/${ar?'en':'ar'}${page?'/'+page:''}${citySlug?'/'+citySlug:''}`} hrefLang={ar?'en':'ar'}>{ar?'English':'العربية'}</a></header>
- <main id="main">{page&&<div className="breadcrumb"><a href={href()}>{t('الرئيسية','Home')}</a> / {titles[page]?.[ar?0:1]}</div>}<div className="intro"><div><div className="eyebrow">{t('كل يوم، على توقيتك','EVERY DAY, IN YOUR TIME')}</div><h1>{titles[page]?.[ar?0:1]}{citySlug?' · '+(ar?cities.find(c=>c.slug===citySlug)?.ar:cities.find(c=>c.slug===citySlug)?.en):''}</h1><p>{page===''?t('لحظتك الحالية، بين تقويمين. كل ما تحتاجه في نظرة.','Your moment, in two calendars. Everything at a glance.'):page==='converter'?t('من الهجري إلى الميلادي والعكس، وفق تقويم أم القرى.','Convert both ways using the Umm al-Qura calendar.'):page==='prayer-times'?t('اختر مدينتك وتاريخك وطريقة الحساب.','Choose your city, date and calculation method.'):page==='months'?t('المسميات العربية والإقليمية والإنجليزية، في مكان واحد.','Arabic, regional and English names, together.'):page==='occasions'?t('تواريخ حسابية للمناسبات القادمة، مع مراعاة الرؤية المحلية.','Calculated dates for upcoming occasions; local observation may differ.'):t('معلومات واضحة عن البيانات وحدود دقتها.','Understand the data and its limitations.')}</p></div>{page===''&&<span className="tag"><Globe2 size={14}/>{zone}</span>}</div>
- {page===''&&<><div className="grid"><section className="panel today"><div className="section-top"><span className="tag"><CalendarDays size={15}/>{fmt(date,{weekday:'long'})}</span><span className="sub">{t('تاريخ اليوم','TODAY’S DATE')}</span></div><div className="date-columns"><div><div className="sub">{t('التاريخ الهجري','HIJRI DATE')}</div><div className="day-number">{String(h.day).padStart(2,'0')}</div><div className="date-name">{ar?hijriNames[h.month-1]:hijriEnglish[h.month-1]}</div><p>{h.year} {t('هـ','AH')} · {h.day}/{h.month}/{h.year}</p></div><div><div className="sub">{t('التاريخ الميلادي','GREGORIAN DATE')}</div><div className="day-number">{String(day).padStart(2,'0')}</div><div className="date-name">{ar?months[month]:english[month]}</div><p>{year} {t('م','CE')} · {day}/{month+1}/{year}</p></div></div><div className="section-top" style={{margin:0}}><span className="sub">{t('تقويم أم القرى • قد يختلف عن الرؤية','Umm al-Qura • observation may differ')}</span><button className="tag" onClick={async()=>{try{await navigator.clipboard.writeText(`${fmt(date)} | ${h.day} ${ar?hijriNames[h.month-1]:hijriEnglish[h.month-1]} ${h.year}`);setStatus(t('تم نسخ التاريخ','Date copied'))}catch{setStatus(t('تعذر النسخ؛ يمكنك تحديد النص ونسخه','Could not copy; select the date text to copy it'))}}}><Copy size={14}/>{t('نسخ','Copy')}</button></div></section><ClockPanel ar={ar} zone={zone} onZoneChange={setTimezone} ZonePicker={SelectField}/></div><div className="status sub" role="status">{status}</div><div className="quick">{([['converter',ArrowLeftRight,t('حوّل أي تاريخ','Convert a date'),t('هجري ⇄ ميلادي','Hijri ⇄ Gregorian')],['prayer-times',Moon,t('متى الصلاة القادمة؟','When is prayer?'),t('مواقيت مدينتك اليوم','Today’s times in your city')],['occasions',CalendarDays,t('المناسبات القادمة','Upcoming occasions'),t('رمضان والأعياد والمزيد','Ramadan, Eid and more')]] as [string,LucideIcon,string,string][]).map(([p,Icon,a,b])=><a key={p} href={href(p)}><Icon size={26}/><div className="grow"><h3>{a}</h3><p>{b}</p></div>{ar?<ArrowUpLeft size={19}/>:<ArrowUpRight size={19}/>}</a>)}</div><section className="section panel"><div className="section-top"><h2>{t('هذا الشهر، بالتفصيل','This month, in detail')}</h2><a href={href('months')}>{t('كل أسماء الأشهر','All month names')} ↗</a></div><div className="stats"><div className="stat"><span className="sub">{t('الشهر الميلادي','Gregorian month')}</span><b>{ar?months[month]:english[month]}</b><span className="sub">{ar?`${levant[month]} · ${maghreb[month]} · ${english[month]}`: `${months[month]} · ${levant[month]}`}</span></div><div className="stat"><span className="sub">{t('عدد أيام الشهر','Days in month')}</span><b>{days} <small>{t('يوماً','days')}</small></b><span className="sub">{t('المتبقي بعد اليوم','Remaining after today')}: {days-day}</span></div><div className="stat"><span className="sub">{t('الشهر الهجري','Hijri month')}</span><b>{ar?hijriNames[h.month-1]:hijriEnglish[h.month-1]}</b><span className="sub">{hDays} {t('يوماً · أم القرى','days · Umm al-Qura')}</span></div><div className="stat"><span className="sub">{t('السنة الميلادية','Gregorian year')}</span><b>{year}</b><span className="sub">{new Date(Date.UTC(year,1,29)).getUTCMonth()===1?t('سنة كبيسة · 366 يوماً','Leap year · 366 days'):t('سنة بسيطة · 365 يوماً','Common year · 365 days')}</span></div></div><div className="progress" aria-label={t('تقدم الشهر','Month progress')}><span style={{width:`${day/days*100}%`}}/></div></section><div className="grid section"><section className="panel"><h2>{ar?months[month]:english[month]} {year}</h2><div className="calendar">{(ar?['ح','ن','ث','ر','خ','ج','س']:['Su','Mo','Tu','We','Th','Fr','Sa']).map((n,i)=><span className="muted" key={i}>{n}</span>)}{Array.from({length:new Date(Date.UTC(year,month,1)).getUTCDay()},(_,i)=><span key={'blank'+i}/>)}{Array.from({length:days},(_,i)=><span className={day===i+1?'selected':''} key={i} aria-current={day===i+1?'date':undefined}>{i+1}</span>)}</div></section><section className="panel"><h2>{t('إجابات سريعة','Quick answers')}</h2><details open><summary>{t('لماذا يختلف التاريخ الهجري أحياناً؟','Why can the Hijri date differ?')}</summary><p>{t('نعرض تقويم أم القرى الحسابي. إعلان بداية الشهر بالرؤية قد يختلف بيوم بحسب بلدك.','We use the calculated Umm al-Qura calendar. Local moon-sighting announcements can differ by a day.')}</p></details><details><summary>{t('هل محرم هو يناير؟','Is Muharram the same as January?')}</summary><p>{t('لا. الأشهر الهجرية قمرية وتتحرك عبر فصول السنة الميلادية، فلا توجد مطابقة ثابتة بينهما.','No. Hijri months follow a lunar calendar and move through the Gregorian seasons; there is no fixed correspondence.')}</p></details><details><summary>{t('على أي توقيت يظهر اليوم؟','Which time zone defines today?')}</summary><p>{t('بحسب المنطقة الزمنية المختارة أعلاه. الساعة تعتمد على دقة وقت جهازك.','The selected time zone above. The live clock depends on your device’s clock accuracy.')}</p></details></section></div><section className="section"><div className="section-top"><h2>{t('العالم في هذه اللحظة','Around the world, right now')}</h2></div><WorldClocks ar={ar} href={href} serverDate={today}/></section></>}
- {page==='converter'&&<Converter ar={ar} date={date}/>}
- {page==='prayer-times'&&<Prayers ar={ar} lang={lang} date={date} citySlug={citySlug} initial={initialPrayer}/>}
- {page==='months'&&<><section className="panel"><h2>{t('الأشهر الميلادية','Gregorian months')}</h2><p>{t('المسميات الشائعة في العالم العربي. قد تختلف التهجئة بين البلدان.','Common names across the Arab world. Spellings vary between countries.')}</p><div className="table-wrap"><table><thead><tr>{[t('الترتيب','No.'),t('العربية الشائعة','Common Arabic'),t('بلاد الشام والعراق','Levant & Iraq'),t('مسميات مغاربية','Maghreb variants'),'English',t('عدد الأيام','Days')].map(n=><th key={n}>{n}</th>)}</tr></thead><tbody>{months.map((n,i)=><tr key={n} className={month===i?'current':''}><td>{i+1}</td><td lang="ar">{n}</td><td lang="ar">{levant[i]}</td><td lang="ar">{maghreb[i]}</td><td lang="en">{english[i]}</td><td>{i===1?'28 / 29':new Date(Date.UTC(2026,i+1,0)).getUTCDate()}</td></tr>)}</tbody></table></div></section><section className="panel section"><h2>{t('الأشهر الهجرية','Hijri months')}</h2><p>{t('الأشهر الهجرية مستقلة عن الميلادية؛ يتكون الشهر من 29 أو 30 يوماً.','Hijri months are independent of Gregorian months and contain 29 or 30 days.')}</p><div className="table-wrap"><table><thead><tr><th>#</th><th>{t('الشهر','Month')}</th><th>{t('الاسم بالإنجليزية','English name')}</th></tr></thead><tbody>{hijriNames.map((n,i)=><tr key={n}><td>{i+1}</td><td lang="ar">{n}</td><td lang="en">{hijriEnglish[i]}</td></tr>)}</tbody></table></div></section></>}
- {page==='occasions'&&<Occasions ar={ar} date={date}/>}
- {page==='about'&&<section className="panel article"><h2>{t('عن يومك الآن','About Your Day Now')}</h2><p>{t('موقع معلومات مجاني يجمع التاريخ والوقت والتحويل ومواقيت الصلاة في أدوات واضحة، دون حساب مستخدم أو إعلانات حالياً.','A free information site combining dates, time, conversion and prayer times in focused tools. No account or ads are currently required.')}</p><h2>{t('التاريخ والوقت','Date and time')}</h2><p>{t('الوقت الحي من ساعة جهازك، وتحويل المناطق الزمنية من قاعدة IANA عبر Intl. التقويم الهجري هو أم القرى عبر ICU؛ يدعم المحول السنوات 1356–1500 هـ. لا يعتمد الموقع على الرؤية الشرعية المحلية.','The live clock uses your device time. IANA time zones are interpreted through Intl. Hijri calculations use ICU’s Umm al-Qura calendar, with conversion supported for 1356–1500 AH. This does not replace local moon-sighting announcements.')}</p><h2>{t('مواقيت الصلاة','Prayer times')}</h2><p>{t('المصدر AlAdhan. يمكنك اختيار طريقة الحساب ومذهب العصر. النتائج حسابية وقد تختلف عن التقويم الرسمي أو موعد الإقامة. في المناطق القطبية قد لا تتوفر بعض الأوقات، ويجب الرجوع إلى المرجعية المحلية.','Data comes from AlAdhan. Select a calculation method and Asr convention. Results are calculated and may differ from official timetables or congregation times. Some times may be unavailable in polar regions; consult local guidance.')}</p><a href="https://aladhan.com/prayer-times-api">AlAdhan · {t('توثيق المصدر','Source documentation')}</a><h2 style={{marginTop:25}}>{t('المناسبات وصلاة العيد','Occasions and Eid prayer')}</h2><p>{t('المناسبات المعروضة تواريخ تقويمية وليست تأكيداً لعطلة رسمية. يوم العيد ووقت صلاته يحددهما الإعلان المحلي؛ لا ننشر وقتاً تقديرياً على أنه موعد مسجد معتمد.','Occasion dates are calendar estimates, not confirmation of public holidays. Local authorities determine Eid dates and prayer schedules. We do not present an estimate as an official mosque time.')}</p><h2>{t('الخصوصية','Privacy')}</h2><p>{t('نحفظ اختيار المنطقة الزمنية في متصفحك فقط. عند البحث عن الصلاة تُرسل المدينة والدولة، أو الإحداثيات بعد موافقتك على تحديد الموقع، إلى AlAdhan لحساب المواقيت. لا يوجد تتبع إعلاني في التطبيق. وقد تحتفظ جهة الاستضافة بسجلات الطلبات التشغيلية.','Your time-zone preference is saved only in your browser. Prayer searches send the city and country, or coordinates after you grant location permission, to AlAdhan. The app contains no advertising trackers. The hosting provider may retain operational request logs.')}</p></section>}
- </main><footer className="footer"><span>© {year} {t('يومك الآن · كل لحظة أوضح','Your Day Now · A clearer sense of time')}</span><div><a href={href('about')}>{t('المصادر والخصوصية','Sources & privacy')}</a><span> · </span><a href={href('converter')}>{t('تحويل التاريخ','Date converter')}</a></div></footer></div>
+
+type Props = {
+  lang: Lang;
+  page: string;
+  /** Civil date in the page's canonical zone, so the HTML holds no timestamp. */
+  initialDate: string;
+  citySlug?: string;
+  initialPrayer?: PrayerData | null;
+};
+
+/**
+ * Chooses the page and owns the two pieces of state the pages share: which
+ * time zone the visitor is looking at, and the status line the copy button
+ * writes to.
+ */
+export default function DateApp({lang, page, initialDate, citySlug, initialPrayer}: Props) {
+  const routeZone = cities.find((c) => c.slug === citySlug)?.zone || 'Asia/Riyadh';
+  const storedZone = useStoredZone();
+  const [chosenZone, setChosenZone] = useState<string | null>(null);
+  const zone = chosenZone ?? (citySlug ? routeZone : storedZone ?? routeZone);
+  const setTimezone = (value: string) => {
+    setChosenZone(value);
+    storeZone(value);
+  };
+
+  const [status, setStatus] = useState('');
+  const today = useCivilDate(zone, initialDate);
+  const view = dayView(lang, today);
+  const href = (path = '') => `/${lang}${path ? '/' + path : ''}`;
+
+  return (
+    <AppShell lang={lang} page={page} citySlug={citySlug} zone={zone} year={view.year}>
+      {page === '' && (
+        <TodayPage
+          view={view}
+          zone={zone}
+          onZoneChange={setTimezone}
+          status={status}
+          onStatus={setStatus}
+          href={href}
+        />
+      )}
+      {page === 'converter' && <ConverterPage ar={view.ar} date={view.date} />}
+      {page === 'prayer-times' && (
+        <PrayersPage ar={view.ar} lang={lang} date={view.date} citySlug={citySlug} initial={initialPrayer} />
+      )}
+      {page === 'occasions' && <OccasionsPage ar={view.ar} date={view.date} />}
+      {page === 'months' && <MonthsPage view={view} />}
+      {page === 'about' && <AboutPage view={view} />}
+    </AppShell>
+  );
 }
