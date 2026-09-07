@@ -19,7 +19,11 @@ function formatter(locale: string, options: Intl.DateTimeFormatOptions) {
  * City names and dates come from the server; only the HH:MM is client-side, so
  * the cached HTML never carries a wall-clock time.
  */
-export default function WorldClocks({ar, href, serverDate}: {
+export default function WorldClocks({
+  ar,
+  href,
+  serverDate,
+}: {
   ar: boolean;
   href: (path: string) => string;
   serverDate: string;
@@ -31,12 +35,24 @@ export default function WorldClocks({ar, href, serverDate}: {
   return (
     <div className="world">
       {shown.map((c) => {
-        const day = now === 0 ? new Date(serverDate + 'T00:00:00Z') : dateInZone(new Date(now), c.zone);
+        const day =
+          now === 0 ? new Date(serverDate + 'T00:00:00Z') : dateInZone(new Date(now), c.zone);
         return (
           <a key={c.slug} href={href('prayer-times/' + c.slug)}>
             {ar ? c.ar : c.en}
-            <b>{now === 0 ? '--:--' : formatter('en-GB', {timeZone: c.zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23'}).format(new Date(now))}</b>
-            <span className="sub">{formatter(locale, {day: 'numeric', month: 'short', timeZone: 'UTC'}).format(day)}</span>
+            <b>
+              {now === 0
+                ? '--:--'
+                : formatter('en-GB', {
+                    timeZone: c.zone,
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hourCycle: 'h23',
+                  }).format(new Date(now))}
+            </b>
+            <span className="sub">
+              {formatter(locale, {day: 'numeric', month: 'short', timeZone: 'UTC'}).format(day)}
+            </span>
           </a>
         );
       })}
