@@ -11,8 +11,20 @@ Bilingual Arabic/English date and time information site. Responsive RTL/LTR inte
 - Unique server-rendered metadata, canonical URLs, reciprocal hreflang, sitemap, robots, WebSite/WebPage/BreadcrumbList JSON-LD, valid 404s and root redirect.
 
 ## Run
-Node >=22.13. `npm ci`, `npm run dev`, `npm run build`.
-The project uses React, TypeScript, Vinext and Cloudflare Workers. `npm run build` produces `dist/server/index.js` and client assets. Preserve the Sites Vite build plugin and generated hosting metadata for Sites deployments.
+Node 22.19 (pinned in `.nvmrc`). `npm ci`, `npm run dev`, `npm run build`.
+On Windows, `npm run dev` and `npm start` need Git Bash or WSL: they set environment variables with POSIX syntax.
+The project uses React, TypeScript, Vinext and Cloudflare Workers. All styling is hand-written CSS in `app/globals.css`; there is no CSS framework. `npm run build` produces `dist/server/index.js` and client assets. Preserve the Sites Vite build plugin and generated hosting metadata for Sites deployments.
+
+## Environment
+- `SITE_URL` — the canonical origin every canonical URL, hreflang alternate, sitemap entry and JSON-LD id is built from. Set in the Forge daemon environment and in `vite.config.ts` for the Cloudflare build.
+- `PUBLIC_INDEXING` — search engines may index the site only when this is exactly `true`.
+- `PORT`, `HOST` — where the standalone server listens.
+- `PRAYERS_ALLOW_REMOTE=false` — turns off the geocoding fallback, so only the curated cities and explicit coordinates resolve.
+
+`GET /api/health` reports the running commit, the build time, the resolved `SITE_URL` and whether it came from the environment or a fallback.
+
+## Caching
+Pages are cached by Cloudflare using the `s-maxage` the application computes: a copy stays valid until midnight in the zone the page is about, capped at an hour. Everything time-dependent — the clock, the world clocks — is rendered in the browser, so nothing in the HTML goes stale before then. RSC navigations and `/api/` are never cached.
 
 ## Self-hosted deployment (Laravel Forge)
 `next.config.ts` sets `output: "standalone"`, which only adds `dist/standalone/` to the same build; `dist/server/index.js` and `dist/client` are unchanged, so Cloudflare Sites deployments keep working. The standalone bundle carries its own `node_modules` and is started on plain Node with `node dist/standalone/server.js`.
@@ -25,10 +37,15 @@ The delivered preview is private by default and therefore intentionally not inde
 Do not enable indexing on both a preview and a public mirror. Keep a single canonical production origin. The GitHub repository itself is not a public website deployment.
 
 ## Data and limitations
-Date conversion is local via ICU/Intl (`islamic-umalqura`). Dates can differ from local moon sighting. Clock accuracy follows the device clock; it is not NTP-synchronized. Prayer data comes from https://aladhan.com/prayer-times-api via a validated same-origin endpoint with bounded timeouts and explicit failure states. Location search depends on provider geocoding; verify returned time zone. Polar times may be absent. No official mosque congregation/Eid timetable or country-specific public-holiday database is asserted.
+Date conversion is local via ICU/Intl (`islamic-umalqura`). Dates can differ from local moon sighting. Clock accuracy follows the device clock; it is not NTP-synchronized. Prayer times are computed in this application with the `adhan` library, not fetched from a provider: the eight city routes need no network at all. Two settings are chosen to match published timetables — the twilight-angle rule at high latitudes, and the 120-minute Umm al-Qura Isha interval during Ramadan — and results still differ from AlAdhan by up to about four minutes, mostly on Asr, because the two use different solar models. A free-text city that is not one of the eight is geocoded once through Open-Meteo (coordinates only, memoised) and then computed here as well; verify the returned time zone. Polar times may be absent. No official mosque congregation/Eid timetable or country-specific public-holiday database is asserted.
 
 ## Checks
-`node --experimental-strip-types --test tests/calendar.test.mjs` tests conversion, month boundaries and time-zone day rollover. `npx tsc --noEmit` checks types. Build and deployment results are documented in the handoff. This repository does not claim measured field Core Web Vitals, official Rich Results validation or guaranteed Google ranking.
+- `npm run typecheck`, `npm run lint`, `npm run test:unit` — no build, a few seconds. Run these before pushing.
+- `npm test` — the above plus a production build and the integration suite, which drives the built worker.
+- `tests/unit/` covers Hijri conversion, prayer computation against recorded reference times, query validation and the cache policy. `tests/integration/` covers routing, rendered metadata and the sitemap.
+- CI runs all of it on every push and pull request (`.github/workflows/ci.yml`). The site is deployed only after CI is green (`.github/workflows/deploy.yml`), and the deployment is confirmed by polling `/api/health` for the commit it stamped.
+
+Not covered: real-browser rendering, field Core Web Vitals, Rich Results validation and Google indexing. This repository claims none of them.
 
 ## Google guidance applied
 - https://developers.google.com/search/docs/essentials
