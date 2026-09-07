@@ -11,7 +11,7 @@ import {useCivilDate, useStoredZone, storeZone} from '@/lib/clock-store';
 import {cities} from '@/lib/calendar';
 import {dayView} from '@/lib/day';
 import type {Lang} from '@/lib/i18n';
-import type {PrayerData, Timetable} from '@/lib/prayers';
+import type {MethodSummary, PrayerData, Timetable} from '@/lib/prayers';
 
 type Props = {
   lang: Lang;
@@ -22,6 +22,8 @@ type Props = {
   initialPrayer?: PrayerData | null;
   /** The whole month for a city route, computed on the server. */
   initialTimetable?: Timetable | null;
+  /** Method parameters read from the calculation library on the server. */
+  methodDetails?: MethodSummary[];
 };
 
 /**
@@ -36,6 +38,7 @@ export default function DateApp({
   citySlug,
   initialPrayer,
   initialTimetable,
+  methodDetails = [],
 }: Props) {
   const routeZone = cities.find((c) => c.slug === citySlug)?.zone || 'Asia/Riyadh';
   const storedZone = useStoredZone();
@@ -72,6 +75,7 @@ export default function DateApp({
           citySlug={citySlug}
           initial={initialPrayer}
           timetable={initialTimetable}
+          methodDetails={methodDetails}
         />
       )}
       {page === 'occasions' && <OccasionsPage ar={view.ar} date={view.date} />}

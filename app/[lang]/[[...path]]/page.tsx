@@ -4,7 +4,7 @@ import type {Metadata} from 'next';
 import DateApp from '@/components/date-app';
 import {cities, routes, titles, dateInZone} from '@/lib/calendar';
 import {SITE_URL, INDEXABLE} from '@/lib/site';
-import {getCityPrayerTimes, cityMonthTimetable} from '@/lib/prayers';
+import {getCityPrayerTimes, cityMonthTimetable, methodSummaries} from '@/lib/prayers';
 export const revalidate = 60;
 type Params = {lang: string; path?: string[]};
 function resolve(p: Params) {
@@ -174,6 +174,7 @@ export default async function Page({params}: {params: Promise<Params>}) {
         citySlug={city?.slug}
         initialPrayer={prayer}
         initialTimetable={timetable}
+        methodDetails={page === 'prayer-times' ? methodSummaries() : undefined}
       />
     </>
   );

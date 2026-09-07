@@ -1,5 +1,7 @@
 'use client';
 import {hijri, fromHijri, hijriNames, hijriEnglish} from '@/lib/calendar';
+import {formatDate} from '@/lib/day';
+import type {Lang} from '@/lib/i18n';
 
 export default function Occasions({ar, date}: {ar: boolean; date: Date}) {
   const t = (a: string, b: string) => (ar ? a : b);
@@ -32,6 +34,22 @@ export default function Occasions({ar, date}: {ar: boolean; date: Date}) {
       };
     })
     .sort((a, b) => a.d.getTime() - b.d.getTime());
+
+  // The same events for the coming years. fromHijri is a binary search, so this
+  // is 35 conversions — cheap on the server, and the page is cached anyway.
+  const lang: Lang = ar ? 'ar' : 'en';
+  const years = [0, 1, 2, 3, 4].map((offset) => h.year + offset);
+  const outlook = events.map(([md, arabic, latin]) => ({
+    name: ar ? arabic : latin,
+    dates: years.map((year) => {
+      try {
+        return fromHijri(year, md[0], md[1]);
+      } catch {
+        // Outside the 1356-1500 AH range the converter supports.
+        return null;
+      }
+    }),
+  }));
   return (
     <>
       <div className="events">
@@ -58,6 +76,52 @@ export default function Occasions({ar, date}: {ar: boolean; date: Date}) {
           </section>
         ))}
       </div>
+      <section className="section panel">
+        <div className="section-top">
+          <h2>{t('المناسبات في السنوات القادمة', 'These occasions in the coming years')}</h2>
+          <span className="sub">
+            {years[0]}–{years[years.length - 1]} {t('هـ', 'AH')}
+          </span>
+        </div>
+        <p className="note">
+          {t(
+            'تواريخ حسابية وفق أم القرى. بداية الشهر تُعلن بالرؤية في كثير من البلدان، فقد يتقدم التاريخ أو يتأخر يوماً واحداً.',
+            'Calculated with Umm al-Qura. Many countries announce the month by sighting, so a date can move by a day either way.',
+          )}
+        </p>
+        <div className="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>{t('المناسبة', 'Occasion')}</th>
+                {years.map((year) => (
+                  <th key={year} style={{direction: 'ltr'}}>
+                    {year} {t('هـ', 'AH')}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {outlook.map((row) => (
+                <tr key={row.name}>
+                  <td>{row.name}</td>
+                  {row.dates.map((date, index) => (
+                    <td key={years[index]} className="sub">
+                      {date
+                        ? formatDate(lang, date, {
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                          })
+                        : '—'}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
       <p className="note">
         {t(
           'التواريخ محسوبة وفق أم القرى، وقد تختلف بحسب رؤية الهلال والبلد. عرض المناسبة لا يعني أنها عطلة رسمية في جميع الدول. تبدأ الليلة الهجرية عند غروب اليوم السابق؛ العد التنازلي هنا لأيام التقويم، وليس لحظة بدء المناسبة شرعاً.',
