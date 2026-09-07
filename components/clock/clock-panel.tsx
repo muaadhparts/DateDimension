@@ -1,7 +1,9 @@
 'use client';
 import {useMemo, useState} from 'react';
-import {useNow} from '@/lib/clock-store';
+import {useNow, useSupportedZones} from '@/lib/clock-store';
 import {cities} from '@/lib/calendar';
+
+const CITY_ZONES = [...new Set(cities.map((c) => c.zone))];
 
 const timeFormatters = new Map<string, Intl.DateTimeFormat>();
 function clockFace(zone: string) {
@@ -33,11 +35,11 @@ export default function ClockPanel({
   const reading = now === 0 ? '--:--:--' : clockFace(zone).format(new Date(now));
   const [hr, mi, se] = now === 0 ? [0, 0, 0] : reading.split(':').map(Number);
 
-  const zones = useMemo(() => {
-    let all: string[] = cities.map((c) => c.zone);
-    try { all = Intl.supportedValuesOf('timeZone'); } catch { /* older engines keep the short list */ }
-    return [...new Set([zone, ...all])].map((z) => [z, z.replaceAll('_', ' ')] as [string, string]);
-  }, [zone]);
+  const supported = useSupportedZones(CITY_ZONES);
+  const zones = useMemo(
+    () => [...new Set([zone, ...supported])].map((z) => [z, z.replaceAll('_', ' ')] as [string, string]),
+    [zone, supported],
+  );
 
   const useDeviceZone = () => {
     onZoneChange(Intl.DateTimeFormat().resolvedOptions().timeZone);
