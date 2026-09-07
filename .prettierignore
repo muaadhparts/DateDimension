@@ -1,0 +1,7 @@
+dist
+.wrangler
+.sites-runtime
+package-lock.json
+# 9 deliberately dense lines of hand-written CSS; Prettier would expand it to
+# hundreds and the diff would hide every future change.
+app/globals.css
