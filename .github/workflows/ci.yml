@@ -33,10 +33,7 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run typecheck
       - run: npm run test:unit
-      # Not blocking yet: the remaining errors are removed by the prayer types
-      # and the clock refactor. Drop continue-on-error once the count is zero.
       - run: npm run lint
-        continue-on-error: true
 
   build:
     name: Production build and integration tests

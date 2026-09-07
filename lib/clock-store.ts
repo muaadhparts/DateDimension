@@ -62,3 +62,48 @@ export function useCivilDate(zone: string, serverDate: string): string {
   const getServerSnapshot = useCallback(() => serverDate, [serverDate]);
   return useSyncExternalStore(perHalfMinute.subscribe, getSnapshot, getServerSnapshot);
 }
+
+const ZONE_KEY = 'dd-zone';
+const zoneListeners = new Set<Listener>();
+
+function readStoredZone(): string | null {
+  try {
+    const stored = localStorage.getItem(ZONE_KEY);
+    if (!stored) return null;
+    new Intl.DateTimeFormat('en', {timeZone: stored}).format();
+    return stored;
+  } catch {
+    return null;
+  }
+}
+
+let storedZone: string | null | undefined;
+
+function subscribeToStoredZone(listener: Listener) {
+  zoneListeners.add(listener);
+  if (storedZone === undefined) storedZone = readStoredZone();
+  const onStorage = (event: StorageEvent) => {
+    if (event.key !== ZONE_KEY) return;
+    storedZone = readStoredZone();
+    for (const l of zoneListeners) l();
+  };
+  window.addEventListener('storage', onStorage);
+  return () => {
+    zoneListeners.delete(listener);
+    window.removeEventListener('storage', onStorage);
+  };
+}
+
+/** The visitor's remembered time zone, or null on the server and first paint. */
+export function useStoredZone(): string | null {
+  return useSyncExternalStore(subscribeToStoredZone, () => storedZone ?? null, () => null);
+}
+
+export function storeZone(zone: string): void {
+  try {
+    localStorage.setItem(ZONE_KEY, zone);
+    storedZone = zone;
+  } catch {
+    /* private browsing keeps the choice for this page view only */
+  }
+}
