@@ -1,0 +1,39 @@
+name: Deploy
+
+# Deployment is downstream of a green build, never of a push. Forge's own
+# push-to-deploy is off; this workflow is the only thing that triggers it.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  forge:
+    if: github.event.workflow_run.conclusion == 'success'
+    name: Deploy to yourdaynow.online
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger the Forge deployment
+        run: curl -fsS -X POST "${{ secrets.FORGE_DEPLOY_WEBHOOK }}"
+
+      - name: Wait for the live site to report the deployed commit
+        run: |
+          want='${{ github.event.workflow_run.head_sha }}'
+          for attempt in $(seq 1 60); do
+            body=$(curl -fsS https://yourdaynow.online/api/health || true)
+            got=$(echo "$body" | sed -n 's/.*"commit":"\([^"]*\)".*/\1/p')
+            if [ "$got" = "$want" ]; then
+              echo "$body"
+              case "$body" in
+                *'"configOk":true'*) echo "deployed $got"; exit 0 ;;
+                *) echo "::error::deployed but SITE_URL is not configured"; exit 1 ;;
+              esac
+            fi
+            sleep 10
+          done
+          echo "::error::the site never reported $want"
+          exit 1
