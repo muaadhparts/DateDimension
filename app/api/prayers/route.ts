@@ -1,4 +1,5 @@
 import {getPrayers, InvalidPrayerRequest} from '@/lib/prayers';
+import {log, safePath} from '@/lib/log';
 
 export async function GET(request: Request) {
   try {
@@ -14,13 +15,10 @@ export async function GET(request: Request) {
   } catch (error) {
     const invalid = error instanceof InvalidPrayerRequest;
     if (!invalid) {
-      console.error(
-        JSON.stringify({
-          level: 'error',
-          event: 'prayer_request_failed',
-          message: error instanceof Error ? error.message : String(error),
-        }),
-      );
+      log('error', 'prayer_request_failed', {
+        message: error instanceof Error ? error.message : String(error),
+        path: safePath(new URL(request.url)),
+      });
     }
     return Response.json(
       {error: invalid ? 'Invalid search parameters' : 'Prayer data unavailable'},
