@@ -1,7 +1,27 @@
 import {getPrayers, InvalidPrayerRequest} from '@/lib/prayers';
 import {log, safePath} from '@/lib/log';
+import {clientKey, createRateLimiter} from '@/lib/rate-limit';
+
+// Generous for a person changing a city or a date, tight enough that nobody
+// can use this endpoint as their own geocoding relay.
+const rateLimit = createRateLimiter({limit: 30, windowMs: 60_000});
 
 export async function GET(request: Request) {
+  const allowance = rateLimit(clientKey(request));
+  if (!allowance.allowed) {
+    return Response.json(
+      {error: 'Too many requests'},
+      {
+        status: 429,
+        headers: {
+          'Retry-After': String(allowance.retryAfterSeconds),
+          'Cache-Control': 'no-store',
+          'X-Robots-Tag': 'noindex',
+        },
+      },
+    );
+  }
+
   try {
     const data = await getPrayers(new URL(request.url).searchParams);
     // Times for a given place and day never change, so a shared cache can hold

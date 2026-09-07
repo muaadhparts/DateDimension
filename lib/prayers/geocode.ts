@@ -3,6 +3,9 @@ import {countryCode} from './countries.ts';
 import {PrayerDataUnavailable} from './types.ts';
 
 const ENDPOINT = 'https://geocoding-api.open-meteo.com/v1/search';
+// A ceiling on what this process asks of the geocoder, whatever the traffic is.
+// Memoised hits do not count, so steady use of known cities never reaches it.
+const OUTBOUND_PER_MINUTE = 30;
 const TIMEOUT_MS = 8000;
 const MAX_MEMO = 500;
 
@@ -11,6 +14,20 @@ const MAX_MEMO = 500;
  * the life of the process. Bounded so the memo cannot become a memory leak.
  */
 const memo = new Map<string, CityCoordinates>();
+
+let windowStarted = 0;
+let windowCount = 0;
+
+function withinOutboundBudget(): boolean {
+  const now = Date.now();
+  if (now - windowStarted > 60_000) {
+    windowStarted = now;
+    windowCount = 0;
+  }
+  if (windowCount >= OUTBOUND_PER_MINUTE) return false;
+  windowCount += 1;
+  return true;
+}
 
 type GeocodingResult = {
   latitude?: number;
@@ -50,6 +67,8 @@ export async function geocodeCity(city: string, country: string): Promise<CityCo
   const key = `${normalise(city)}|${normalise(country)}`;
   const cached = memo.get(key);
   if (cached) return cached;
+
+  if (!withinOutboundBudget()) throw new PrayerDataUnavailable();
 
   const query = new URLSearchParams({name: city, count: '10', format: 'json'});
   let response: Response;
