@@ -35,6 +35,11 @@ jobs:
       - run: npm run typecheck
       - run: npm run test:unit
       - run: npm run lint
+      # Runtime dependencies must be clean. The dev tree still carries
+      # advisories in the build toolchain (vinext, vite, wrangler and the
+      # Next.js packages they pull in); upgrading that is its own piece of
+      # work, and none of it ships.
+      - run: npm audit --omit=dev --audit-level=high
 
   build:
     name: Production build and integration tests
