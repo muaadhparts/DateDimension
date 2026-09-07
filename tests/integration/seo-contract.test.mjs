@@ -49,8 +49,8 @@ test('Indexable pages say so, and the JSON-LD graph is valid and escaped', async
   const graph = JSON.parse(block[1])['@graph'];
   assert.deepEqual(
     graph.map((node) => node['@type']),
-    ['WebSite', 'WebPage'],
-    'the home page has no breadcrumb',
+    ['WebSite', 'WebPage', 'FAQPage'],
+    'the home page carries its FAQ and no breadcrumb',
   );
   assert.equal(graph[0]['@id'], `${ORIGIN}/#website`);
 
@@ -61,8 +61,8 @@ test('Indexable pages say so, and the JSON-LD graph is valid and escaped', async
   );
   assert.deepEqual(
     inner['@graph'].map((node) => node['@type']),
-    ['WebSite', 'WebPage', 'BreadcrumbList'],
-    'inner pages carry a breadcrumb',
+    ['WebSite', 'WebPage', 'Place', 'BreadcrumbList'],
+    'a city page carries its place and a breadcrumb',
   );
 });
 
@@ -233,4 +233,38 @@ test('Social cards point at a real image, in the right locale', async () => {
     // ar_AR is Argentina, which is what this used to say.
     assert.ok(!body.includes('ar_AR'), 'the Arabic locale must not be ar_AR');
   }
+});
+
+test('Structured data only claims what the page shows', async () => {
+  const graphOf = (body) =>
+    JSON.parse(body.match(/<script type="application\/ld\+json">(.*?)<\/script>/s)[1])['@graph'];
+
+  const home = graphOf(await html('/ar'));
+  const faq = home.find((node) => node['@type'] === 'FAQPage');
+  assert.ok(faq, 'the home page marks up its FAQ');
+  assert.equal(faq.mainEntity.length, 3);
+  const page = home.find((node) => node['@type'] === 'WebPage');
+  assert.match(page.dateModified, /^\d{4}-\d{2}-\d{2}$/, 'the content is recomputed daily');
+  assert.equal(page.primaryImageOfPage.url, `${ORIGIN}/og-ar.png`);
+  assert.ok(!home.some((node) => node['@type'] === 'Place'), 'no place on a page without one');
+
+  // Each question and answer must appear in the visible markup too.
+  const body = await html('/ar');
+  for (const question of faq.mainEntity) {
+    assert.ok(body.includes(question.name), `the page shows: ${question.name}`);
+    assert.ok(body.includes(question.acceptedAnswer.text), 'the page shows the answer');
+  }
+
+  const city = graphOf(await html('/en/prayer-times/makkah'));
+  const place = city.find((node) => node['@type'] === 'Place');
+  assert.ok(place, 'a city page marks up its place');
+  assert.equal(place.geo.latitude, 21.3891);
+  assert.equal(place.geo.longitude, 39.8579);
+  // The coordinates are marked up only because they are on the page.
+  const cityBody = await html('/en/prayer-times/makkah');
+  assert.ok(cityBody.includes('21.3891'), 'the latitude is visible');
+  assert.ok(cityBody.includes('39.8579'), 'the longitude is visible');
+
+  const search = graphOf(await html('/en/prayer-times'));
+  assert.ok(!search.some((node) => node['@type'] === 'Place'), 'no place before a city is chosen');
 });

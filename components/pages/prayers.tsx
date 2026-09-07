@@ -207,6 +207,7 @@ export default function Prayers({
           cityName={ar ? preset.ar : preset.en}
           ar={ar}
           today={date.toISOString().slice(0, 10)}
+          coordinates={timetable.coordinates}
         />
       )}
       <div className="city-links">

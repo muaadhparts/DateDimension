@@ -20,11 +20,13 @@ export default function PrayerTimetable({
   cityName,
   ar,
   today,
+  coordinates,
 }: {
   timetable: Timetable;
   cityName: string;
   ar: boolean;
   today: string;
+  coordinates?: {lat: number; lon: number};
 }) {
   const t = (a: string, b: string) => (ar ? a : b);
   const monthName = ar ? arabicMonths[timetable.month - 1] : english[timetable.month - 1];
@@ -47,6 +49,15 @@ export default function PrayerTimetable({
           {hijriSpan.join(t(' و', ' / '))} {timetable.rows[0].hijri.year} {t('هـ', 'AH')}
         </span>
       </div>
+      {coordinates && (
+        <p className="sub" style={{marginTop: 6}}>
+          {t('الإحداثيات المستخدمة في الحساب', 'The coordinates used in the calculation')}:{' '}
+          <span style={{direction: 'ltr', display: 'inline-block'}}>
+            {coordinates.lat.toFixed(4)}, {coordinates.lon.toFixed(4)}
+          </span>{' '}
+          · {timetable.zone}
+        </p>
+      )}
       <p className="note">
         {t(
           'الجدول محسوب لكامل الشهر بنفس الطريقة والمذهب المختارين أعلاه. الأوقات بتوقيت المدينة نفسها.',
