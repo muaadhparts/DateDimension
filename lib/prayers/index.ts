@@ -14,6 +14,8 @@ import {
 export {InvalidPrayerRequest, PrayerDataUnavailable} from './types.ts';
 export type {PrayerData, PrayerName, PrayerRequest} from './types.ts';
 export {coordinatesForSlug} from './coordinates.ts';
+export {cityMonthTimetable} from './timetable.ts';
+export type {Timetable, TimetableRow} from './timetable.ts';
 
 const isMethod = (value: string): value is MethodId =>
   (METHOD_IDS as readonly string[]).includes(value);

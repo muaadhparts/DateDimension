@@ -11,7 +11,7 @@ import {useCivilDate, useStoredZone, storeZone} from '@/lib/clock-store';
 import {cities} from '@/lib/calendar';
 import {dayView} from '@/lib/day';
 import type {Lang} from '@/lib/i18n';
-import type {PrayerData} from '@/lib/prayers';
+import type {PrayerData, Timetable} from '@/lib/prayers';
 
 type Props = {
   lang: Lang;
@@ -20,6 +20,8 @@ type Props = {
   initialDate: string;
   citySlug?: string;
   initialPrayer?: PrayerData | null;
+  /** The whole month for a city route, computed on the server. */
+  initialTimetable?: Timetable | null;
 };
 
 /**
@@ -27,7 +29,14 @@ type Props = {
  * time zone the visitor is looking at, and the status line the copy button
  * writes to.
  */
-export default function DateApp({lang, page, initialDate, citySlug, initialPrayer}: Props) {
+export default function DateApp({
+  lang,
+  page,
+  initialDate,
+  citySlug,
+  initialPrayer,
+  initialTimetable,
+}: Props) {
   const routeZone = cities.find((c) => c.slug === citySlug)?.zone || 'Asia/Riyadh';
   const storedZone = useStoredZone();
   const [chosenZone, setChosenZone] = useState<string | null>(null);
@@ -62,6 +71,7 @@ export default function DateApp({lang, page, initialDate, citySlug, initialPraye
           date={view.date}
           citySlug={citySlug}
           initial={initialPrayer}
+          timetable={initialTimetable}
         />
       )}
       {page === 'occasions' && <OccasionsPage ar={view.ar} date={view.date} />}
