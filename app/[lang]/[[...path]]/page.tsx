@@ -4,7 +4,14 @@ import type {Metadata} from 'next';
 import DateApp from '@/components/date-app';
 import {cities, routes, titles, dateInZone} from '@/lib/calendar';
 import {SITE_URL, INDEXABLE} from '@/lib/site';
-import {getCityPrayerTimes, cityMonthTimetable, methodSummaries} from '@/lib/prayers';
+import {
+  getCityPrayerTimes,
+  cityMonthTimetable,
+  methodSummaries,
+  coordinatesForSlug,
+} from '@/lib/prayers';
+import {HOME_FAQ} from '@/lib/faq';
+import {pick} from '@/lib/i18n';
 export const revalidate = 60;
 type Params = {lang: string; path?: string[]};
 function resolve(p: Params) {
@@ -142,7 +149,50 @@ export default async function Page({params}: {params: Promise<Params>}) {
         name,
         inLanguage: p.lang,
         isPartOf: {'@id': SITE_URL + '/#website'},
+        // The dates and times on every page are recomputed daily, so this is
+        // the honest value rather than a fixed publication date.
+        dateModified: dateInZone(now, zone).toISOString().slice(0, 10),
+        primaryImageOfPage: {
+          '@type': 'ImageObject',
+          url: `${SITE_URL}/og-${p.lang}.png`,
+          width: 1200,
+          height: 630,
+        },
       },
+      // Only where the page actually shows the answers.
+      ...(page === ''
+        ? [
+            {
+              '@type': 'FAQPage',
+              '@id': url + '#faq',
+              mainEntity: HOME_FAQ.map((entry) => ({
+                '@type': 'Question',
+                name: pick(p.lang as Lang, entry.question),
+                acceptedAnswer: {'@type': 'Answer', text: pick(p.lang as Lang, entry.answer)},
+              })),
+            },
+          ]
+        : []),
+      // Only where the coordinates are on the page, which is the city routes.
+      ...(city && coordinatesForSlug(city.slug)
+        ? [
+            {
+              '@type': 'Place',
+              '@id': url + '#place',
+              name: p.lang === 'ar' ? city.ar : city.en,
+              address: {
+                '@type': 'PostalAddress',
+                addressLocality: city.en,
+                addressCountry: city.country,
+              },
+              geo: {
+                '@type': 'GeoCoordinates',
+                latitude: coordinatesForSlug(city.slug)!.lat,
+                longitude: coordinatesForSlug(city.slug)!.lon,
+              },
+            },
+          ]
+        : []),
       ...(page
         ? [
             {

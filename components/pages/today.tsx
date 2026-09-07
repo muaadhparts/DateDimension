@@ -6,6 +6,8 @@ import WorldClocks from '@/components/clock/world-clocks';
 import SelectField from '@/components/select-field';
 import {hijriNames, hijriEnglish, months, english, levant, maghreb} from '@/lib/calendar';
 import type {DayView} from '@/lib/day';
+import {HOME_FAQ} from '@/lib/faq';
+import {pick} from '@/lib/i18n';
 
 export default function TodayPage({
   view,
@@ -35,6 +37,9 @@ export default function TodayPage({
     format: fmt,
   } = view;
   const t = (a: string, b: string) => (ar ? a : b);
+  const faq = HOME_FAQ.map(
+    (entry) => [pick(view.lang, entry.question), pick(view.lang, entry.answer)] as const,
+  );
   const setStatus = onStatus;
   const setTimezone = onZoneChange;
 
@@ -209,35 +214,12 @@ export default function TodayPage({
         </section>
         <section className="panel">
           <h2>{t('إجابات سريعة', 'Quick answers')}</h2>
-          <details open>
-            <summary>
-              {t('لماذا يختلف التاريخ الهجري أحياناً؟', 'Why can the Hijri date differ?')}
-            </summary>
-            <p>
-              {t(
-                'نعرض تقويم أم القرى الحسابي. إعلان بداية الشهر بالرؤية قد يختلف بيوم بحسب بلدك.',
-                'We use the calculated Umm al-Qura calendar. Local moon-sighting announcements can differ by a day.',
-              )}
-            </p>
-          </details>
-          <details>
-            <summary>{t('هل محرم هو يناير؟', 'Is Muharram the same as January?')}</summary>
-            <p>
-              {t(
-                'لا. الأشهر الهجرية قمرية وتتحرك عبر فصول السنة الميلادية، فلا توجد مطابقة ثابتة بينهما.',
-                'No. Hijri months follow a lunar calendar and move through the Gregorian seasons; there is no fixed correspondence.',
-              )}
-            </p>
-          </details>
-          <details>
-            <summary>{t('على أي توقيت يظهر اليوم؟', 'Which time zone defines today?')}</summary>
-            <p>
-              {t(
-                'بحسب المنطقة الزمنية المختارة أعلاه. الساعة تعتمد على دقة وقت جهازك.',
-                'The selected time zone above. The live clock depends on your device’s clock accuracy.',
-              )}
-            </p>
-          </details>
+          {faq.map(([question, answer], index) => (
+            <details key={question} open={index === 0}>
+              <summary>{question}</summary>
+              <p>{answer}</p>
+            </details>
+          ))}
         </section>
       </div>
       <section className="section">

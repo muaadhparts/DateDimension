@@ -14,6 +14,8 @@ export type TimetableRow = {
 export type Timetable = {
   city: string;
   zone: string;
+  /** Shown on the page, and marked up as GeoCoordinates. */
+  coordinates: {lat: number; lon: number};
   year: number;
   /** 1-12. */
   month: number;
@@ -51,5 +53,14 @@ export function cityMonthTimetable(
     });
   }
 
-  return {city: slug, zone: coordinates.zone, year, month, method, school, rows};
+  return {
+    city: slug,
+    zone: coordinates.zone,
+    coordinates: {lat: coordinates.lat, lon: coordinates.lon},
+    year,
+    month,
+    method,
+    school,
+    rows,
+  };
 }
