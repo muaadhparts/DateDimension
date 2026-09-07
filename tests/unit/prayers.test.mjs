@@ -171,3 +171,38 @@ test('A known city never reaches the network', async () => {
     globalThis.fetch = realFetch;
   }
 });
+
+test('A city month timetable covers the month and stays consistent day to day', async () => {
+  const {cityMonthTimetable} = await import('../../lib/prayers/index.ts');
+
+  const september = cityMonthTimetable('makkah', 2026, 9);
+  assert.equal(september.rows.length, 30, 'September has 30 days');
+  assert.equal(september.zone, 'Asia/Riyadh');
+  assert.equal(september.rows[0].date, '2026-09-01');
+  assert.equal(september.rows[29].date, '2026-09-30');
+
+  const february = cityMonthTimetable('london', 2028, 2);
+  assert.equal(february.rows.length, 29, 'a leap February has 29 days');
+
+  // Sunrise moves by minutes across a month, never by hours.
+  for (const row of september.rows) {
+    assert.match(row.timings.Fajr, /^\d{2}:\d{2}$/);
+    assert.ok(row.hijri.day >= 1 && row.hijri.day <= 30);
+  }
+  const sunrise = september.rows.map(
+    (row) => Number(row.timings.Sunrise.slice(0, 2)) * 60 + Number(row.timings.Sunrise.slice(3)),
+  );
+  for (let i = 1; i < sunrise.length; i++) {
+    assert.ok(Math.abs(sunrise[i] - sunrise[i - 1]) <= 3, `sunrise jumped on day ${i + 1}`);
+  }
+
+  // The day's own page and its row in the month must agree.
+  const single = getCityPrayerTimes('makkah', '2026-09-07');
+  const row = september.rows.find((entry) => entry.date === '2026-09-07');
+  assert.deepEqual(
+    ['Fajr', 'Dhuhr', 'Maghrib'].map((key) => row.timings[key]),
+    ['Fajr', 'Dhuhr', 'Maghrib'].map((key) => single.timings[key]),
+  );
+
+  assert.equal(cityMonthTimetable('atlantis', 2026, 9), null);
+});

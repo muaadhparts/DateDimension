@@ -4,7 +4,7 @@ import type {Metadata} from 'next';
 import DateApp from '@/components/date-app';
 import {cities, routes, titles, dateInZone} from '@/lib/calendar';
 import {SITE_URL, INDEXABLE} from '@/lib/site';
-import {getCityPrayerTimes} from '@/lib/prayers';
+import {getCityPrayerTimes, cityMonthTimetable} from '@/lib/prayers';
 export const revalidate = 60;
 type Params = {lang: string; path?: string[]};
 function resolve(p: Params) {
@@ -108,9 +108,17 @@ export default async function Page({params}: {params: Promise<Params>}) {
   const now = new Date();
   const zone = city?.zone || 'Asia/Riyadh';
   let prayer = null;
+  let timetable = null;
   if (page === 'prayer-times') {
     const c = city || cities[0];
-    prayer = getCityPrayerTimes(c.slug, dateInZone(now, c.zone).toISOString().slice(0, 10));
+    const localDate = dateInZone(now, c.zone).toISOString().slice(0, 10);
+    prayer = getCityPrayerTimes(c.slug, localDate);
+    // Only the city routes get the month: on the search page the visitor has
+    // not chosen a place yet, and a table for a default city would mislead.
+    if (city) {
+      const [year, month] = localDate.split('-').map(Number);
+      timetable = cityMonthTimetable(city.slug, year, month);
+    }
   }
   const url = `${SITE_URL}/${p.lang}${path ? '/' + path : ''}`;
   const name =
@@ -165,6 +173,7 @@ export default async function Page({params}: {params: Promise<Params>}) {
         initialDate={dateInZone(now, zone).toISOString().slice(0, 10)}
         citySlug={city?.slug}
         initialPrayer={prayer}
+        initialTimetable={timetable}
       />
     </>
   );

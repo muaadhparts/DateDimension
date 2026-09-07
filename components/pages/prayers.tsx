@@ -4,7 +4,8 @@ import {Moon, Sun, Sunrise, Sunset, LocateFixed} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import SelectField from '@/components/select-field';
 import {cities} from '@/lib/calendar';
-import type {PrayerData, PrayerName} from '@/lib/prayers';
+import type {PrayerData, PrayerName, Timetable} from '@/lib/prayers';
+import PrayerTimetable from '@/components/pages/prayer-timetable';
 
 const methods: [string, string, string][] = [
   ['3', 'رابطة العالم الإسلامي', 'Muslim World League'],
@@ -22,12 +23,14 @@ export default function Prayers({
   date,
   citySlug,
   initial,
+  timetable,
 }: {
   ar: boolean;
   lang: string;
   date: Date;
   citySlug?: string;
   initial?: PrayerData | null;
+  timetable?: Timetable | null;
 }) {
   const t = (a: string, b: string) => (ar ? a : b);
   const preset = cities.find((c) => c.slug === citySlug) || cities[0];
@@ -197,14 +200,22 @@ export default function Prayers({
               </div>
               <p className="note">
                 {t(
-                  'المصدر: AlAdhan · الأوقات حسب المنطقة الزمنية الموضحة. هذه مواقيت حسابية وليست مواعيد الإقامة. راجع الجهة المحلية عند غياب بعض الأوقات.',
-                  'Source: AlAdhan · Times use the displayed time zone. These are calculated times, not congregation schedules. Consult local guidance if any time is unavailable.',
+                  'الأوقات محسوبة في هذا الموقع بمكتبة adhan حسب المنطقة الزمنية الموضحة. هي مواقيت حسابية وليست مواعيد الإقامة، وقد تختلف بدقائق عن الجداول الرسمية.',
+                  'Calculated here with the adhan library, in the time zone shown. These are calculated times, not congregation schedules, and can differ from an official timetable by a few minutes.',
                 )}
               </p>
             </>
           )}
         </div>
       </section>
+      {timetable && (
+        <PrayerTimetable
+          timetable={timetable}
+          cityName={ar ? preset.ar : preset.en}
+          ar={ar}
+          today={date.toISOString().slice(0, 10)}
+        />
+      )}
       <div className="city-links">
         {cities.map((c) => (
           <a key={c.slug} href={`/${lang}/prayer-times/${c.slug}`}>
