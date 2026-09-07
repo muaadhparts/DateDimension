@@ -3,6 +3,7 @@ import {useState} from 'react';
 import {ArrowLeftRight} from 'lucide-react';
 import SelectField from '@/components/select-field';
 import {hijri, fromHijri, hijriNames, hijriEnglish} from '@/lib/calendar';
+import HijriMonthGrid from '@/components/pages/hijri-month-grid';
 
 export default function Converter({ar, date}: {ar: boolean; date: Date}) {
   const t = (a: string, b: string) => (ar ? a : b);
@@ -132,6 +133,7 @@ export default function Converter({ar, date}: {ar: boolean; date: Date}) {
           )}
         </div>
       </section>
+      <HijriMonthGrid ar={ar} today={date} />
       <section className="section article">
         <h2>{t('كيف يتم التحويل؟', 'How does conversion work?')}</h2>
         <p>

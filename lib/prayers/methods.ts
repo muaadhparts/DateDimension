@@ -57,6 +57,57 @@ export const METHODS: Record<
   '16': {id: 16, name: 'Dubai', nameAr: 'دبي', build: CalculationMethod.Dubai},
 };
 
+/**
+ * Who publishes each method, for the comparison table. The angles themselves
+ * are read from the library rather than restated here, so the table cannot
+ * drift from the numbers actually used in the calculation.
+ */
+export const METHOD_AUTHORITIES: Record<MethodId, {ar: string; en: string}> = {
+  '1': {ar: 'باكستان والهند وبنغلاديش وأفغانستان', en: 'Pakistan, India, Bangladesh, Afghanistan'},
+  '2': {ar: 'أمريكا الشمالية', en: 'North America'},
+  '3': {
+    ar: 'أوروبا والشرق الأقصى وأجزاء من أمريكا',
+    en: 'Europe, the Far East, parts of the Americas',
+  },
+  '4': {ar: 'السعودية', en: 'Saudi Arabia'},
+  '5': {
+    ar: 'مصر وسوريا والعراق ولبنان وأجزاء من أفريقيا',
+    en: 'Egypt, Syria, Iraq, Lebanon, parts of Africa',
+  },
+  '11': {ar: 'سنغافورة وماليزيا وإندونيسيا', en: 'Singapore, Malaysia, Indonesia'},
+  '13': {ar: 'تركيا', en: 'Türkiye'},
+  '16': {ar: 'الإمارات', en: 'United Arab Emirates'},
+};
+
+export type MethodSummary = {
+  id: MethodId;
+  name: string;
+  nameAr: string;
+  /** Degrees below the horizon that define Fajr. */
+  fajrAngle: number;
+  /** Either an angle for Isha, or a fixed interval after Maghrib in minutes. */
+  ishaAngle: number | null;
+  ishaInterval: number | null;
+  authority: {ar: string; en: string};
+};
+
+/** Reads each method's real parameters out of the library. */
+export function methodSummaries(): MethodSummary[] {
+  return (Object.keys(METHODS) as MethodId[]).map((id) => {
+    const params = METHODS[id].build();
+    const interval = params.ishaInterval > 0 ? params.ishaInterval : null;
+    return {
+      id,
+      name: METHODS[id].name,
+      nameAr: METHODS[id].nameAr,
+      fajrAngle: params.fajrAngle,
+      ishaAngle: interval ? null : params.ishaAngle,
+      ishaInterval: interval,
+      authority: METHOD_AUTHORITIES[id],
+    };
+  });
+}
+
 export const MADHAB: Record<School, (typeof Madhab)[keyof typeof Madhab]> = {
   '0': Madhab.Shafi,
   '1': Madhab.Hanafi,

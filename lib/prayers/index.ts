@@ -15,6 +15,8 @@ export {InvalidPrayerRequest, PrayerDataUnavailable} from './types.ts';
 export type {PrayerData, PrayerName, PrayerRequest} from './types.ts';
 export {coordinatesForSlug} from './coordinates.ts';
 export {cityMonthTimetable} from './timetable.ts';
+export {methodSummaries} from './methods.ts';
+export type {MethodSummary} from './methods.ts';
 export type {Timetable, TimetableRow} from './timetable.ts';
 
 const isMethod = (value: string): value is MethodId =>

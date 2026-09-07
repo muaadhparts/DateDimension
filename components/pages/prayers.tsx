@@ -4,19 +4,10 @@ import {Moon, Sun, Sunrise, Sunset, LocateFixed} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import SelectField from '@/components/select-field';
 import {cities} from '@/lib/calendar';
-import type {PrayerData, PrayerName, Timetable} from '@/lib/prayers';
+import type {MethodSummary, PrayerData, PrayerName, Timetable} from '@/lib/prayers';
 import PrayerTimetable from '@/components/pages/prayer-timetable';
+import MethodGuide from '@/components/pages/method-guide';
 
-const methods: [string, string, string][] = [
-  ['3', 'رابطة العالم الإسلامي', 'Muslim World League'],
-  ['4', 'أم القرى – مكة', 'Umm al-Qura, Makkah'],
-  ['5', 'الهيئة المصرية للمساحة', 'Egyptian General Authority'],
-  ['2', 'أمريكا الشمالية – ISNA', 'North America – ISNA'],
-  ['1', 'جامعة كراتشي', 'University of Karachi'],
-  ['16', 'دبي', 'Dubai'],
-  ['13', 'رئاسة الشؤون الدينية التركية', 'Diyanet, Turkey'],
-  ['11', 'مجلس سنغافورة الإسلامي', 'MUIS, Singapore'],
-];
 export default function Prayers({
   ar,
   lang,
@@ -24,6 +15,7 @@ export default function Prayers({
   citySlug,
   initial,
   timetable,
+  methodDetails,
 }: {
   ar: boolean;
   lang: string;
@@ -31,6 +23,7 @@ export default function Prayers({
   citySlug?: string;
   initial?: PrayerData | null;
   timetable?: Timetable | null;
+  methodDetails: MethodSummary[];
 }) {
   const t = (a: string, b: string) => (ar ? a : b);
   const preset = cities.find((c) => c.slug === citySlug) || cities[0];
@@ -150,7 +143,7 @@ export default function Prayers({
               value={method}
               onChange={setMethod}
               label={t('طريقة الحساب', 'Calculation method')}
-              items={methods.map(([id, a, b]) => [id, ar ? a : b])}
+              items={methodDetails.map((m) => [m.id, ar ? m.nameAr : m.name])}
             />
           </div>
           <div className="field">
@@ -223,6 +216,7 @@ export default function Prayers({
           </a>
         ))}
       </div>
+      <MethodGuide methods={methodDetails} ar={ar} />
       <section className="section panel article">
         <h2>
           {t('متى صلاة عيد الفطر وعيد الأضحى؟', 'When are Eid al-Fitr and Eid al-Adha prayers?')}
