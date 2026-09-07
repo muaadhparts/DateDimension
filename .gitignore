@@ -43,3 +43,6 @@ next-env.d.ts
 
 *.tsbuildinfo
 !.env.example
+
+# local Claude Code permissions
+.claude/settings.local.json
