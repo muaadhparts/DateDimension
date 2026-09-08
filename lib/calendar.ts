@@ -152,12 +152,3 @@ export const cities = [
   },
   {slug: 'jakarta', ar: 'جاكرتا', en: 'Jakarta', country: 'Indonesia', zone: 'Asia/Jakarta'},
 ];
-export const routes = ['', 'converter', 'prayer-times', 'occasions', 'months', 'about'];
-export const titles: Record<string, [string, string]> = {
-  '': ['تاريخ اليوم والوقت الآن', 'Today’s date & current time'],
-  converter: ['تحويل التاريخ الهجري والميلادي', 'Hijri & Gregorian date converter'],
-  'prayer-times': ['مواقيت الصلاة اليوم', 'Today’s prayer times'],
-  occasions: ['المناسبات الإسلامية', 'Islamic occasions'],
-  months: ['أسماء الأشهر وعدد أيامها', 'Month names & lengths'],
-  about: ['المصادر ومنهجية الحساب', 'Sources & calculation methods'],
-};

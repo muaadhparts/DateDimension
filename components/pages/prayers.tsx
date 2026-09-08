@@ -135,7 +135,7 @@ export default function Prayers({
     return () => {
       cancelled = true;
     };
-  }, [citySlug]);
+  }, [citySlug, ar]);
 
   function locate() {
     if (!navigator.geolocation) {

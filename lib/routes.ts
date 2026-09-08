@@ -1,6 +1,7 @@
 import type {Bi} from './i18n.ts';
 
-export type RouteKey = '' | 'converter' | 'prayer-times' | 'occasions' | 'months' | 'about';
+export type RouteKey =
+  '' | 'converter' | 'prayer-times' | 'quran' | 'occasions' | 'months' | 'about';
 
 export type RouteContent = {
   key: RouteKey;
@@ -15,6 +16,8 @@ export type RouteContent = {
   intro: Bi;
   /** Whether /{lang}/{key}/{city} is a valid shape. */
   hasCityPages: boolean;
+  /** Whether /{lang}/{key}/{1-114} is a valid shape. */
+  hasSurahPages?: boolean;
 };
 
 /**
@@ -67,6 +70,25 @@ export const ROUTES: readonly RouteContent[] = [
     ],
     intro: ['اختر مدينتك وتاريخك وطريقة الحساب.', 'Choose your city, date and calculation method.'],
     hasCityPages: true,
+  },
+  {
+    key: 'quran',
+    nav: ['القرآن الكريم', 'Quran'],
+    title: ['القرآن الكريم', 'The Holy Quran'],
+    metaTitle: [
+      'القرآن الكريم كاملاً بالرسم العثماني',
+      'The Holy Quran in full, in Uthmani script',
+    ],
+    description: [
+      'سور القرآن الكريم كاملة بالرسم العثماني مرتبة كما في المصحف، مع البحث عن أي سورة بالاسم أو الرقم، وعدد آياتها ومكان نزولها.',
+      'Every surah of the Quran in the Uthmani script, in mushaf order, searchable by name or number, with verse counts and place of revelation.',
+    ],
+    intro: [
+      'السور مرتبة كما في المصحف. ابحث بالاسم أو بالرقم.',
+      'In mushaf order. Search by name or number.',
+    ],
+    hasCityPages: false,
+    hasSurahPages: true,
   },
   {
     key: 'occasions',

@@ -23,7 +23,9 @@ export function policyFor(pathname: string, now: Date = new Date()): CachePolicy
 
   const [, lang, page, city] = pathname.split('/');
   if (lang !== 'ar' && lang !== 'en') return null;
-  if (page === 'about') return {sMaxAge: 86_400, staleWhileRevalidate: 86_400};
+  // Pages with no date in them: the text does not change, so the only reason
+  // to expire a copy is a deployment.
+  if (page === 'about' || page === 'quran') return {sMaxAge: 86_400, staleWhileRevalidate: 86_400};
 
   let seconds: number;
   if (page === 'prayer-times') {

@@ -6,12 +6,18 @@ import ConverterPage from '@/components/pages/converter';
 import PrayersPage from '@/components/pages/prayers';
 import OccasionsPage from '@/components/pages/occasions';
 import MonthsPage from '@/components/pages/months';
+import {lazy, Suspense} from 'react';
+// The surah list is 114 rows of metadata; only the Quran pages should carry it.
+const QuranIndex = lazy(() => import('@/components/pages/quran-index'));
+const SurahPage = lazy(() => import('@/components/pages/surah-page'));
 import AboutPage from '@/components/pages/about';
 import {useCivilDate, useStoredZone, storeZone} from '@/lib/clock-store';
 import {cities} from '@/lib/calendar';
 import {dayView} from '@/lib/day';
 import type {Lang} from '@/lib/i18n';
 import type {MethodSummary, PrayerData, Timetable} from '@/lib/prayers';
+import type {Surah} from '@/lib/quran/types';
+import {bareName} from '@/lib/quran/text';
 
 type Props = {
   lang: Lang;
@@ -24,6 +30,8 @@ type Props = {
   initialTimetable?: Timetable | null;
   /** Method parameters read from the calculation library on the server. */
   methodDetails?: MethodSummary[];
+  /** Loaded on the server for a /quran/{number} route. */
+  surah?: Surah | null;
 };
 
 /**
@@ -39,6 +47,7 @@ export default function DateApp({
   initialPrayer,
   initialTimetable,
   methodDetails = [],
+  surah,
 }: Props) {
   const routeZone = cities.find((c) => c.slug === citySlug)?.zone || 'Asia/Riyadh';
   const storedZone = useStoredZone();
@@ -55,7 +64,18 @@ export default function DateApp({
   const href = (path = '') => `/${lang}${path ? '/' + path : ''}`;
 
   return (
-    <AppShell lang={lang} page={page} citySlug={citySlug} zone={zone} year={view.year}>
+    <AppShell
+      lang={lang}
+      page={page}
+      citySlug={citySlug}
+      subject={
+        surah
+          ? {name: view.ar ? bareName(surah) : surah.englishName, segment: String(surah.number)}
+          : null
+      }
+      zone={zone}
+      year={view.year}
+    >
       {page === '' && (
         <TodayPage
           view={view}
@@ -77,6 +97,15 @@ export default function DateApp({
           timetable={initialTimetable}
           methodDetails={methodDetails}
         />
+      )}
+      {page === 'quran' && (
+        <Suspense fallback={<section className="panel empty" aria-busy="true" />}>
+          {surah ? (
+            <SurahPage surah={surah} lang={lang} href={href} />
+          ) : (
+            <QuranIndex lang={lang} href={href} />
+          )}
+        </Suspense>
       )}
       {page === 'occasions' && <OccasionsPage ar={view.ar} date={view.date} />}
       {page === 'months' && <MonthsPage view={view} />}

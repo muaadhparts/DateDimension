@@ -1,8 +1,9 @@
 import {notFound} from 'next/navigation';
-import type {Lang} from '@/lib/i18n';
+import {isLang, type Lang} from '@/lib/i18n';
 import type {Metadata} from 'next';
 import DateApp from '@/components/date-app';
-import {cities, routes, titles, dateInZone} from '@/lib/calendar';
+import {cities, dateInZone} from '@/lib/calendar';
+import {ROUTE_KEYS, routeFor} from '@/lib/routes';
 import {SITE_URL, INDEXABLE} from '@/lib/site';
 import {
   getCityPrayerTimes,
@@ -11,26 +12,77 @@ import {
   coordinatesForSlug,
 } from '@/lib/prayers';
 import {HOME_FAQ} from '@/lib/faq';
+import {surahSummary, loadSurah, bareName} from '@/lib/quran';
 import {pick} from '@/lib/i18n';
 export const revalidate = 60;
 type Params = {lang: string; path?: string[]};
 function resolve(p: Params) {
-  const path = p.path || [],
-    page = path[0] || '',
-    city = path[1] ? cities.find((c) => c.slug === path[1]) : undefined;
+  const path = p.path || [];
+  const page = path[0] || '';
+  const second = path[1];
+  const city =
+    page === 'prayer-times' && second ? cities.find((c) => c.slug === second) : undefined;
+  // Surahs are addressed by number, and only the 114 that exist.
+  const surahNumber =
+    page === 'quran' && second && /^\d{1,3}$/.test(second) ? Number(second) : undefined;
+  const surah = surahNumber ? surahSummary(surahNumber) : undefined;
+
   if (
-    !['ar', 'en'].includes(p.lang) ||
-    !routes.includes(page) ||
+    !isLang(p.lang) ||
+    !ROUTE_KEYS.includes(page as never) ||
     path.length > 2 ||
-    (path.length === 2 && (page !== 'prayer-times' || !city))
-  )
+    (path.length === 2 && !city && !surah)
+  ) {
     notFound();
-  return {page, city, path: path.join('/')};
+  }
+  return {page, city, surah, path: path.join('/')};
 }
 export async function generateMetadata({params}: {params: Promise<Params>}): Promise<Metadata> {
   const p = await params;
-  const {page, city, path} = resolve(p);
+  const {page, city, surah, path} = resolve(p);
   const ar = p.lang === 'ar';
+  if (surah) {
+    const name = ar ? bareName(surah) : surah.englishName;
+    const where =
+      surah.revelationType === 'Meccan' ? (ar ? 'مكية' : 'Meccan') : ar ? 'مدنية' : 'Medinan';
+    const surahTitle = ar
+      ? `سورة ${name} مكتوبة كاملة بالرسم العثماني`
+      : `Surah ${name} in full, in Uthmani script`;
+    const surahUrl = `${SITE_URL}/${p.lang}/quran/${surah.number}`;
+    const surahDescription = ar
+      ? `سورة ${name} كاملة بالرسم العثماني، وهي السورة ${surah.number} في المصحف، ${where}، وعدد آياتها ${surah.verses}. مع التنقل إلى السورة السابقة والتالية.`
+      : `Surah ${name} in full in the Uthmani script — number ${surah.number} in the mushaf, ${where}, ${surah.verses} verses — with links to the surahs before and after it.`;
+    return {
+      title: `${surahTitle} — ${ar ? 'يومك الآن' : 'Your Day Now'}`,
+      description: surahDescription,
+      alternates: {
+        canonical: surahUrl,
+        languages: {
+          ar: `${SITE_URL}/ar/quran/${surah.number}`,
+          en: `${SITE_URL}/en/quran/${surah.number}`,
+          'x-default': `${SITE_URL}/ar/quran/${surah.number}`,
+        },
+      },
+      robots: {index: INDEXABLE, follow: true},
+      openGraph: {
+        title: surahTitle,
+        description: surahDescription,
+        url: surahUrl,
+        siteName: 'Your Day Now',
+        locale: ar ? 'ar_SA' : 'en_GB',
+        alternateLocale: ar ? 'en_GB' : 'ar_SA',
+        type: 'article',
+        images: [{url: `${SITE_URL}/og-${p.lang}.png`, width: 1200, height: 630, alt: surahTitle}],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: surahTitle,
+        description: surahDescription,
+        images: [`${SITE_URL}/og-${p.lang}.png`],
+      },
+    };
+  }
+
   const title =
     (ar
       ? page === ''
@@ -39,44 +91,18 @@ export async function generateMetadata({params}: {params: Promise<Params>}): Pro
           ? 'تحويل التاريخ من هجري إلى ميلادي والعكس'
           : city
             ? `مواقيت الصلاة في ${city.ar} اليوم`
-            : titles[page][0]
+            : pick('ar', routeFor(page)!.title)
       : city
         ? `Prayer times in ${city.en} today`
-        : titles[page][1]) +
+        : pick('en', routeFor(page)!.title)) +
     ' — ' +
     (ar ? 'يومك الآن' : 'Your Day Now');
-  const descriptions: Record<string, [string, string]> = {
-    '': [
-      'تاريخ اليوم هجري وميلادي والوقت الآن حسب منطقتك الزمنية، مع اسم الشهر وعدد أيامه والتقويم واختصارات تحويل التاريخ والصلاة.',
-      'Today’s Hijri and Gregorian date, live local time, month names, days remaining and calendar, with date conversion and prayer tools.',
-    ],
-    converter: [
-      'حوّل التاريخ من هجري إلى ميلادي والعكس وفق أم القرى. أدخل اليوم والشهر والسنة لتحصل على النتيجة مباشرة.',
-      'Convert Hijri to Gregorian and Gregorian to Hijri using Umm al-Qura. Enter a date for an immediate result.',
-    ],
-    'prayer-times': [
-      'مواقيت الفجر والشروق والظهر والعصر والمغرب والعشاء حسب المدينة والتاريخ وطريقة الحساب، مع معلومات صلاة العيد.',
-      'Fajr, sunrise, Dhuhr, Asr, Maghrib and Isha by city, date and calculation method, with guidance on Eid prayer schedules.',
-    ],
-    occasions: [
-      'مواعيد رمضان وعيد الفطر ويوم عرفة وعيد الأضحى والمناسبات الإسلامية القادمة وفق أم القرى، مع توضيح اختلاف الرؤية المحلية.',
-      'Upcoming Ramadan, Eid al-Fitr, Arafah and Eid al-Adha dates using Umm al-Qura, with local observation caveats.',
-    ],
-    months: [
-      'أسماء الأشهر الميلادية بالعربية والإنجليزية ومسمياتها في الشام والعراق والمغرب العربي، وأسماء الأشهر الهجرية وعدد الأيام.',
-      'Gregorian month names in English and Arabic, Levantine and Maghreb variants, plus Hijri months and month lengths.',
-    ],
-    about: [
-      'مصادر بيانات يومك الآن، منهجية حساب أم القرى ومواقيت الصلاة، حدود الدقة وسياسة الخصوصية.',
-      'Your Day Now data sources, Umm al-Qura and prayer calculation methods, accuracy limitations and privacy.',
-    ],
-  };
   const description =
     (city
       ? ar
         ? `مواقيت الصلاة في ${city.ar}. `
         : `Prayer times in ${city.en}, ${city.country}. `
-      : '') + descriptions[page][ar ? 0 : 1];
+      : '') + pick(p.lang as Lang, routeFor(page)!.description);
   const url = `${SITE_URL}/${p.lang}${path ? '/' + path : ''}`;
   return {
     title,
@@ -111,9 +137,10 @@ export async function generateMetadata({params}: {params: Promise<Params>}): Pro
 }
 export default async function Page({params}: {params: Promise<Params>}) {
   const p = await params;
-  const {page, city, path} = resolve(p);
+  const {page, city, surah: surahMeta, path} = resolve(p);
   const now = new Date();
   const zone = city?.zone || 'Asia/Riyadh';
+  const surah = surahMeta ? await loadSurah(surahMeta.number) : null;
   let prayer = null;
   let timetable = null;
   if (page === 'prayer-times') {
@@ -129,7 +156,7 @@ export default async function Page({params}: {params: Promise<Params>}) {
   }
   const url = `${SITE_URL}/${p.lang}${path ? '/' + path : ''}`;
   const name =
-    titles[page][p.lang === 'ar' ? 0 : 1] +
+    pick(p.lang as Lang, routeFor(page)!.title) +
     (city ? ' · ' + (p.lang === 'ar' ? city.ar : city.en) : '');
   const structured = {
     '@context': 'https://schema.org',
@@ -225,6 +252,7 @@ export default async function Page({params}: {params: Promise<Params>}) {
         initialPrayer={prayer}
         initialTimetable={timetable}
         methodDetails={page === 'prayer-times' ? methodSummaries() : undefined}
+        surah={surah}
       />
     </>
   );
