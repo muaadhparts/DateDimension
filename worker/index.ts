@@ -25,11 +25,14 @@ interface ExecutionContext {
 
 // Path prefixes the app itself owns. Anything else that looks like a page is
 // rewritten under the default language so it renders a real 404 inside a
-// lang-aware <html> element. A first segment containing a dot is a file —
-// icons, the manifest, robots.txt — and is left alone.
+// lang-aware <html> element.
 const PASSTHROUGH = new Set(['ar', 'en', 'api', 'assets', '_vinext', '__vinext']);
 
-const isFile = (segment: string) => segment.includes('.');
+// A request for a file is left alone. The test is the last segment, not the
+// first: /favicon.svg is a file and so is /fonts/amiri-quran-arabic.woff2,
+// and testing only the first segment sent the second one to /ar/fonts/… — the
+// mushaf shipped without its font because of exactly that.
+const isFile = (pathname: string) => pathname.slice(pathname.lastIndexOf('/') + 1).includes('.');
 
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
@@ -61,7 +64,7 @@ const worker = {
 
     const segment = url.pathname.split('/')[1];
     const outgoing =
-      segment && !PASSTHROUGH.has(segment) && !isFile(segment)
+      segment && !PASSTHROUGH.has(segment) && !isFile(url.pathname)
         ? new Request(new URL(`/ar${url.pathname}${url.search}`, url), request)
         : request;
 
@@ -74,7 +77,13 @@ const worker = {
       request.method === 'GET' && !isRscRequest(request) && policyFor(url.pathname) !== null;
 
     if (edge && cacheable) {
-      const key = new Request(new URL(url.pathname, url).toString(), {method: 'GET'});
+      // The build is part of the key, so a deployment orphans every stored
+      // copy instead of serving yesterday's HTML until it expires. Purging by
+      // API would need a token permission this account does not grant.
+      const key = new Request(
+        new URL(`${url.pathname}?b=${process.env.APP_COMMIT ?? 'dev'}`, url).toString(),
+        {method: 'GET'},
+      );
       const hit = await edge.match(key);
       if (hit) return hit;
 
