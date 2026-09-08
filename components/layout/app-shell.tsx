@@ -12,6 +12,7 @@ export default function AppShell({
   lang,
   page,
   citySlug,
+  subject,
   zone,
   year,
   children,
@@ -19,6 +20,8 @@ export default function AppShell({
   lang: Lang;
   page: string;
   citySlug?: string;
+  /** What this page is about, when it is about one thing: a city, a surah. */
+  subject?: {name: string; segment: string} | null;
   zone: string;
   year: number;
   children: React.ReactNode;
@@ -28,6 +31,7 @@ export default function AppShell({
   const href = (path = '') => `/${lang}${path ? '/' + path : ''}`;
   const route = routeFor(page);
   const city = citySlug ? cities.find((c) => c.slug === citySlug) : undefined;
+  const named = subject ?? (city ? {name: ar ? city.ar : city.en, segment: city.slug} : null);
   const title = route ? pick(lang, route.title) : '';
 
   return (
@@ -59,7 +63,7 @@ export default function AppShell({
         </nav>
         <a
           className="language"
-          href={`/${ar ? 'en' : 'ar'}${page ? '/' + page : ''}${citySlug ? '/' + citySlug : ''}`}
+          href={`/${ar ? 'en' : 'ar'}${page ? '/' + page : ''}${named ? '/' + named.segment : ''}`}
           hrefLang={ar ? 'en' : 'ar'}
         >
           {ar ? 'English' : 'العربية'}
@@ -68,7 +72,9 @@ export default function AppShell({
       <main id="main">
         {page && (
           <div className="breadcrumb">
-            <a href={href()}>{t('الرئيسية', 'Home')}</a> / {title}
+            <a href={href()}>{t('الرئيسية', 'Home')}</a> /{' '}
+            {named ? <a href={href(page)}>{title}</a> : title}
+            {named ? ` / ${named.name}` : ''}
           </div>
         )}
         <div className="intro">
@@ -76,7 +82,7 @@ export default function AppShell({
             <div className="eyebrow">{t('كل يوم، على توقيتك', 'EVERY DAY, IN YOUR TIME')}</div>
             <h1>
               {title}
-              {city ? ' · ' + (ar ? city.ar : city.en) : ''}
+              {named ? ' · ' + named.name : ''}
             </h1>
             <p>{route ? pick(lang, route.intro) : ''}</p>
           </div>

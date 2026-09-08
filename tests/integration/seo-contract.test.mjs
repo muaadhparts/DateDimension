@@ -81,8 +81,9 @@ test('The sitemap lists exactly the routes that exist, on the real origin', asyn
   const body = await (await request('/sitemap.xml', {})).text();
   const urls = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 
-  assert.equal(urls.length, 28);
-  assert.equal(new Set(urls).size, 28, 'no duplicates');
+  // 7 section pages + 8 cities + 114 surahs, in each language.
+  assert.equal(urls.length, 258);
+  assert.equal(new Set(urls).size, 258, 'no duplicates');
   assert.ok(
     urls.every((url) => url.startsWith(`${ORIGIN}/`)),
     'every URL uses the real origin',
@@ -92,10 +93,18 @@ test('The sitemap lists exactly the routes that exist, on the real origin', asyn
   for (const lang of ['ar', 'en']) {
     assert.equal(
       urls.filter((url) => url.startsWith(`${ORIGIN}/${lang}`)).length,
-      14,
-      `${lang} has 14 URLs`,
+      129,
+      `${lang} has 129 URLs`,
     );
-    for (const path of ['', '/converter', '/prayer-times', '/occasions', '/months', '/about']) {
+    for (const path of [
+      '',
+      '/converter',
+      '/prayer-times',
+      '/quran',
+      '/occasions',
+      '/months',
+      '/about',
+    ]) {
       assert.ok(urls.includes(`${ORIGIN}/${lang}${path}`), `${lang}${path} is listed`);
     }
     for (const city of [
