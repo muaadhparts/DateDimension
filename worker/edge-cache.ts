@@ -24,9 +24,11 @@ export function policyFor(pathname: string, now: Date = new Date()): CachePolicy
   const [, lang, page, city] = pathname.split('/');
   if (lang !== 'ar' && lang !== 'en') return null;
   // Pages with no date in them: the text does not change, so the only reason
-  // to expire a copy is a deployment.
+  // to expire a copy is a deployment — which is why these are capped like the
+  // rest rather than held for a day. A long stale-while-revalidate means a
+  // visitor still never waits for the origin.
   if (page === 'about' || page === 'quran' || page === 'mushaf')
-    return {sMaxAge: 86_400, staleWhileRevalidate: 86_400};
+    return {sMaxAge: MAX_AGE, staleWhileRevalidate: 86_400};
 
   let seconds: number;
   if (page === 'prayer-times') {

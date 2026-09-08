@@ -289,6 +289,9 @@ test('Static files reach the asset store instead of being rewritten into a 404',
     '/icon-512.png',
     '/og-ar.png',
     '/og-en.png',
+    // Nested, which is the case the first-segment test missed: the mushaf
+    // font shipped 404ing because /fonts/… was rewritten to /ar/fonts/….
+    '/fonts/amiri-quran-arabic.woff2',
   ]) {
     const response = await fetchWithAssets(path);
     assert.equal(response.status, 200, `${path} is served`);
