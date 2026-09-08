@@ -1,6 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SURAHS, TOTAL_VERSES, SEARCHABLE, surahSummary, loadSurah} from '../../lib/quran/index.ts';
+import {
+  SURAHS,
+  TOTAL_VERSES,
+  SEARCHABLE,
+  MUSHAF_PAGES,
+  surahSummary,
+  loadSurah,
+  loadMushafPage,
+} from '../../lib/quran/index.ts';
 import {BASMALA, bareName, foldArabic} from '../../lib/quran/text.ts';
 
 test('The index is the whole Quran, in order', () => {
@@ -91,4 +99,75 @@ test('Search folds diacritics, hamza forms and script', () => {
 test('Names drop the leading word "سورة"', () => {
   assert.equal(bareName({name: 'سُورَةُ ٱلْفَاتِحَةِ'}), 'ٱلْفَاتِحَةِ');
   assert.equal(bareName({name: 'النَّاسِ'}), 'النَّاسِ', 'a name without it is untouched');
+});
+
+test('The 604 pages hold the whole Quran, each verse once and in order', async () => {
+  // The page files are a second copy of the text, so the thing worth proving
+  // is that they say exactly what the surah files say — no verse lost at a
+  // page break, none printed twice, none out of order.
+  const seen = [];
+  for (let page = 1; page <= MUSHAF_PAGES; page++) {
+    const sheet = await loadMushafPage(page);
+    assert.ok(sheet, `page ${page} loads`);
+    assert.equal(sheet.page, page);
+    assert.ok(sheet.blocks.length > 0, `page ${page} is not blank`);
+    assert.ok(sheet.juz >= 1 && sheet.juz <= 30, `page ${page} names a juz`);
+    for (const block of sheet.blocks) {
+      assert.ok(block.verses.length > 0);
+      for (const verse of block.verses) {
+        assert.ok(verse.text.trim().length > 0, `page ${page} has no empty verse`);
+        seen.push(`${block.surah}:${verse.number}`);
+      }
+    }
+  }
+  assert.equal(seen.length, TOTAL_VERSES, 'every verse printed once');
+  assert.equal(new Set(seen).size, TOTAL_VERSES, 'and none printed twice');
+
+  const expected = [];
+  for (let number = 1; number <= 114; number++) {
+    const surah = await loadSurah(number);
+    for (const verse of surah.verses) expected.push(`${number}:${verse.number}`);
+  }
+  assert.deepEqual(seen, expected, 'in the order the mushaf prints them');
+});
+
+test('A page begins a surah only where the surah begins', async () => {
+  const first = await loadMushafPage(1);
+  assert.deepEqual(
+    first.blocks.map((block) => block.surah),
+    [1],
+  );
+  assert.equal(first.blocks[0].verses.length, 7, 'Al-Fatiha in full on page 1');
+  assert.equal(first.blocks[0].basmala, false, 'its Basmala is verse 1');
+
+  const second = await loadMushafPage(2);
+  assert.deepEqual(
+    second.blocks.map((block) => block.surah),
+    [2],
+  );
+  assert.equal(second.blocks[0].basmala, true, 'Al-Baqarah opens with it');
+  assert.equal(second.blocks[0].verses[0].number, 1);
+
+  const last = await loadMushafPage(MUSHAF_PAGES);
+  assert.deepEqual(
+    last.blocks.map((block) => block.surah),
+    [112, 113, 114],
+    'three surahs share the last page',
+  );
+  assert.ok(
+    last.blocks.every((block) => block.basmala),
+    'each of them starts there, so each is headed',
+  );
+
+  // A page that continues a surah must not repeat its heading.
+  const middle = await loadMushafPage(3);
+  assert.equal(middle.blocks[0].surah, 2);
+  assert.equal(middle.blocks[0].basmala, false);
+  assert.notEqual(middle.blocks[0].verses[0].number, 1);
+});
+
+test('Out-of-range mushaf pages resolve to nothing', async () => {
+  for (const page of [0, 605, -1, 2.5, Number.NaN]) {
+    assert.equal(await loadMushafPage(page), null, `${page} is not a page`);
+  }
 });

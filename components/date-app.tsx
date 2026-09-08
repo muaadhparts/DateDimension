@@ -10,6 +10,7 @@ import {lazy, Suspense} from 'react';
 // The surah list is 114 rows of metadata; only the Quran pages should carry it.
 const QuranIndex = lazy(() => import('@/components/pages/quran-index'));
 const SurahPage = lazy(() => import('@/components/pages/surah-page'));
+const MushafPageView = lazy(() => import('@/components/pages/mushaf-page'));
 import AboutPage from '@/components/pages/about';
 import {useCivilDate, useStoredZone, storeZone} from '@/lib/clock-store';
 import {cities} from '@/lib/calendar';
@@ -17,6 +18,7 @@ import {dayView} from '@/lib/day';
 import type {Lang} from '@/lib/i18n';
 import type {MethodSummary, PrayerData, Timetable} from '@/lib/prayers';
 import type {Surah} from '@/lib/quran/types';
+import type {MushafPage} from '@/lib/quran';
 import {bareName} from '@/lib/quran/text';
 
 type Props = {
@@ -32,6 +34,8 @@ type Props = {
   methodDetails?: MethodSummary[];
   /** Loaded on the server for a /quran/{number} route. */
   surah?: Surah | null;
+  /** Loaded on the server for a /mushaf/{number} route. */
+  mushaf?: MushafPage | null;
 };
 
 /**
@@ -48,6 +52,7 @@ export default function DateApp({
   initialTimetable,
   methodDetails = [],
   surah,
+  mushaf,
 }: Props) {
   const routeZone = cities.find((c) => c.slug === citySlug)?.zone || 'Asia/Riyadh';
   const storedZone = useStoredZone();
@@ -71,7 +76,12 @@ export default function DateApp({
       subject={
         surah
           ? {name: view.ar ? bareName(surah) : surah.englishName, segment: String(surah.number)}
-          : null
+          : mushaf
+            ? {
+                name: view.ar ? `صفحة ${mushaf.page}` : `Page ${mushaf.page}`,
+                segment: String(mushaf.page),
+              }
+            : null
       }
       zone={zone}
       year={view.year}
@@ -105,6 +115,11 @@ export default function DateApp({
           ) : (
             <QuranIndex lang={lang} href={href} />
           )}
+        </Suspense>
+      )}
+      {page === 'mushaf' && mushaf && (
+        <Suspense fallback={<section className="panel empty" aria-busy="true" />}>
+          <MushafPageView page={mushaf} lang={lang} href={href} />
         </Suspense>
       )}
       {page === 'occasions' && <OccasionsPage ar={view.ar} date={view.date} />}
