@@ -203,6 +203,27 @@ test('The HTML is the same for every visitor, whatever the edge says about them'
   assert.equal((await located.json()).data.countryCode, 'JP');
 });
 
+test('A surah page holds all its verses and shows one printed page at a time', async () => {
+  // The reading is paginated, but the surah is a whole thing and the page has
+  // to say so: every verse stays in the HTML, only one sheet is shown.
+  const {loadSurah} = await import('../../lib/quran/index.ts');
+  const surah = await loadSurah(2);
+  const body = await html('/ar/quran/2');
+  for (const verse of [surah.verses[0], surah.verses[5], surah.verses[285]]) {
+    assert.ok(body.includes(verse.text), `verse ${verse.number} is in the page`);
+  }
+
+  const sheets = body.match(/class="panel mushaf mushaf-sheet"/g) || [];
+  const hidden = body.match(/class="panel mushaf mushaf-sheet" hidden=""/g) || [];
+  assert.equal(sheets.length, 48, 'one sheet per mushaf page Al-Baqarah is printed on');
+  assert.equal(hidden.length, 47, 'all but the one being read are hidden');
+
+  // A surah printed on a single page has nothing to turn.
+  const naas = await html('/ar/quran/114');
+  assert.equal((naas.match(/class="panel mushaf mushaf-sheet"/g) || []).length, 1);
+  assert.ok(!naas.includes('hidden=""'));
+});
+
 test('The health endpoint reports what is running', async () => {
   const response = await request('/api/health', {});
   assert.equal(response.status, 200);

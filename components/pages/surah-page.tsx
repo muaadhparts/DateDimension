@@ -1,18 +1,24 @@
 'use client';
+import {useRef, useState} from 'react';
 import {ArrowLeft, ArrowRight} from 'lucide-react';
 import {surahSummary, type Surah, type Verse} from '@/lib/quran';
 import {BASMALA, bareName} from '@/lib/quran/text';
 import type {Lang} from '@/lib/i18n';
 
+type Spread = {page: number; juz: number; verses: Verse[]};
+
 /**
- * One surah, broken at the same places a printed mushaf breaks it.
+ * One surah, read the way a mushaf is read: one page at a time.
  *
- * The verses run as continuous text rather than as a list of rows, because
- * that is how a mushaf reads and how the eye follows a sentence that spans
- * several verses. Each verse ends with its number in the Arabic end-of-ayah
- * mark, which is the same signal a printed copy gives. Every group below
- * carries exactly the verses printed on that page of the Madani edition, and
- * links to that page on its own, where the surah before or after it continues.
+ * Every page of the surah is in the HTML — a surah is a whole thing and the
+ * page should say so — but only the one being read is shown, and the buttons
+ * turn between them. Each carries the verses printed on that page of the
+ * Madani edition and the number that page has there, so the reader can find
+ * the same place in a physical copy.
+ *
+ * Only this surah's verses appear here. Where a page also holds the end of the
+ * surah before it or the start of the one after, that whole page is at
+ * /mushaf/{number}, which every sheet links to.
  */
 export default function SurahPage({
   surah,
@@ -30,15 +36,25 @@ export default function SurahPage({
   const Back = ar ? ArrowRight : ArrowLeft;
   const Forward = ar ? ArrowLeft : ArrowRight;
 
-  const juz = [...new Set(surah.verses.map((verse) => verse.juz))];
   // Consecutive verses that share a page, in order — the printed layout.
-  const spreads: {page: number; verses: Verse[]}[] = [];
+  const spreads: Spread[] = [];
   for (const verse of surah.verses) {
     const last = spreads[spreads.length - 1];
     if (last && last.page === verse.page) last.verses.push(verse);
-    else spreads.push({page: verse.page, verses: [verse]});
+    else spreads.push({page: verse.page, juz: verse.juz, verses: [verse]});
   }
-  const pages = spreads.map((spread) => spread.page);
+  const juz = [...new Set(surah.verses.map((verse) => verse.juz))];
+  const firstPage = spreads[0].page;
+  const lastPage = spreads[spreads.length - 1].page;
+
+  const [current, setCurrent] = useState(0);
+  const reader = useRef<HTMLDivElement>(null);
+  const turn = (to: number) => {
+    setCurrent(to);
+    // Pages differ in length, so without this a turn can leave the reader
+    // looking at the middle of the new one.
+    reader.current?.scrollIntoView({block: 'start'});
+  };
 
   return (
     <>
@@ -64,46 +80,81 @@ export default function SurahPage({
           <div className="stat">
             <span className="sub">{t('صفحات المصحف', 'Mushaf pages')}</span>
             <b>
-              {pages[0]}
-              {pages.length > 1 ? `–${pages[pages.length - 1]}` : ''}
+              {firstPage}
+              {spreads.length > 1 ? `–${lastPage}` : ''}
             </b>
-            <a className="sub" href={href(`mushaf/${pages[0]}`)}>
-              {t('افتح المصحف هنا', 'Open the mushaf here')}
-            </a>
+            <span className="sub">
+              {t(
+                `${spreads.length} صفحة`,
+                spreads.length > 1 ? `${spreads.length} pages` : '1 page',
+              )}
+            </span>
           </div>
         </div>
       </section>
 
-      {spreads.map((spread, index) => (
-        <section
-          key={spread.page}
-          className="panel mushaf mushaf-page"
-          lang="ar"
-          dir="rtl"
-          aria-label={`صفحة ${spread.page}`}
-        >
-          <p className="mushaf-page-top" dir={ar ? 'rtl' : 'ltr'} lang={lang}>
-            <a href={href(`mushaf/${spread.page}`)}>
-              {t(`صفحة ${spread.page}`, `Page ${spread.page}`)}
-            </a>
-            <span className="sub">
-              {t(`الجزء ${spread.verses[0].juz}`, `Juz ${spread.verses[0].juz}`)}
-            </span>
-          </p>
-          {index === 0 && surah.basmala && <p className="basmala">{BASMALA}</p>}
-          <p className="verses">
-            {spread.verses.map((verse) => (
-              <span key={verse.number} id={`v${verse.number}`} className="verse">
-                {verse.text}
-                <span className="verse-number" aria-label={`آية ${verse.number}`}>
-                  {'۝'}
-                  {verse.number.toLocaleString('ar-EG')}
-                </span>{' '}
-              </span>
-            ))}
-          </p>
-        </section>
-      ))}
+      <div ref={reader}>
+        {spreads.map((spread, index) => (
+          <section
+            key={spread.page}
+            className="panel mushaf mushaf-sheet"
+            hidden={index !== current}
+            aria-label={t(`صفحة ${spread.page}`, `Page ${spread.page}`)}
+          >
+            <p className="mushaf-page-top">
+              <span lang={ar ? 'ar' : undefined}>{ar ? bareName(surah) : surah.englishName}</span>
+              <span className="sub">{t(`الجزء ${spread.juz}`, `Juz ${spread.juz}`)}</span>
+            </p>
+            <div lang="ar" dir="rtl">
+              {index === 0 && surah.basmala && (
+                <>
+                  <p className="mushaf-surah-head">{bareName(surah)}</p>
+                  <p className="basmala">{BASMALA}</p>
+                </>
+              )}
+              <p className="verses">
+                {spread.verses.map((verse) => (
+                  <span key={verse.number} id={`v${verse.number}`} className="verse">
+                    {verse.text}
+                    <span className="verse-number" aria-label={`آية ${verse.number}`}>
+                      {'۝'}
+                      {verse.number.toLocaleString('ar-EG')}
+                    </span>{' '}
+                  </span>
+                ))}
+              </p>
+            </div>
+            <p className="mushaf-page-number" lang="ar">
+              {spread.page.toLocaleString('ar-EG')}
+            </p>
+          </section>
+        ))}
+      </div>
+
+      <nav className="page-nav" aria-label={t('التنقل بين صفحات السورة', 'Page navigation')}>
+        {current > 0 ? (
+          <button onClick={() => turn(current - 1)}>
+            <Back size={18} aria-hidden="true" />
+            {t(`الصفحة ${spreads[current - 1].page}`, `Page ${spreads[current - 1].page}`)}
+          </button>
+        ) : (
+          <span />
+        )}
+        <a className="tag" href={href(`mushaf/${spreads[current].page}`)}>
+          {t(
+            `${current + 1} من ${spreads.length} · افتحها في المصحف`,
+            `${current + 1} of ${spreads.length} · open in the mushaf`,
+          )}
+        </a>
+        {current < spreads.length - 1 ? (
+          <button onClick={() => turn(current + 1)}>
+            {t(`الصفحة ${spreads[current + 1].page}`, `Page ${spreads[current + 1].page}`)}
+            <Forward size={18} aria-hidden="true" />
+          </button>
+        ) : (
+          <span />
+        )}
+      </nav>
 
       <nav className="surah-nav" aria-label={t('التنقل بين السور', 'Surah navigation')}>
         {previous ? (
@@ -135,8 +186,8 @@ export default function SurahPage({
 
       <p className="note">
         {t(
-          'الصفحات مقسّمة بترقيم مصحف المدينة المنورة. النص بالرسم العثماني من مشروع تنزيل (tanzil.net)، منقول دون تعديل.',
-          'Pages follow the Madani mushaf numbering. Uthmani script from the Tanzil project (tanzil.net), reproduced without modification.',
+          'الصفحات بترقيم مصحف المدينة المنورة، وتُعرض هنا آيات هذه السورة وحدها؛ أما الصفحة كاملة بما فيها من سورة أخرى فهي في صفحات المصحف. النص بالرسم العثماني من مشروع تنزيل (tanzil.net)، منقول دون تعديل.',
+          'Pages follow the Madani mushaf numbering, and only this surah’s verses are shown here; the whole printed page, including any other surah on it, is in the mushaf view. Uthmani script from the Tanzil project (tanzil.net), reproduced without modification.',
         )}
       </p>
     </>
