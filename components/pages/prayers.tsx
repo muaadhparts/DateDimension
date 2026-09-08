@@ -112,9 +112,22 @@ export default function Prayers({
         const response = await fetch('/api/location', {signal: AbortSignal.timeout(8000)});
         if (!response.ok) return;
         const {data} = await response.json();
-        if (cancelled || !data?.city) return;
-        setCity(data.city);
-        setNearby(data.city);
+        if (cancelled) return;
+
+        if (data?.city) {
+          setCity(data.city);
+          setNearby(data.city);
+          return;
+        }
+
+        // No city from the edge, but the country is enough to open on a
+        // curated city there rather than on the default one.
+        const match = data?.citySlug ? cities.find((c) => c.slug === data.citySlug) : undefined;
+        if (match && match.slug !== cities[0].slug) {
+          setCity(match.en);
+          setCountry(match.country);
+          setNearby(ar ? match.ar : match.en);
+        }
       } catch {
         // The default city stays.
       }
