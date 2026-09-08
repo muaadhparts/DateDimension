@@ -179,6 +179,30 @@ test('A mushaf page carries its own verses, and only those', async () => {
   assert.equal(missing.status, 404, 'there is no page 605');
 });
 
+test('The HTML is the same for every visitor, whatever the edge says about them', async () => {
+  // One cached copy is served to everyone, so nothing about the caller may
+  // reach it. The visitor's own zone and city are applied in the browser.
+  const saudi = await request('/ar', {accept: 'text/html', 'cf-ipcountry': 'SA'});
+  const japanese = await request('/ar', {
+    accept: 'text/html',
+    'cf-ipcountry': 'JP',
+    'cf-ipcity': 'Tokyo',
+    'cf-iptimezone': 'Asia/Tokyo',
+    'cf-iplatitude': '35.68',
+    'cf-iplongitude': '139.69',
+  });
+  const first = await saudi.text();
+  const second = await japanese.text();
+  assert.equal(first, second, 'the page carries nothing about who asked for it');
+  assert.ok(!second.includes('Asia/Tokyo'), 'no visitor zone is baked in');
+  assert.ok(!second.includes('Tokyo'), 'no visitor city is baked in');
+
+  // The endpoint that does read those headers must never be cached.
+  const located = await request('/api/location', {'cf-ipcountry': 'JP'});
+  assert.equal(located.headers.get('cache-control'), 'no-store');
+  assert.equal((await located.json()).data.countryCode, 'JP');
+});
+
 test('The health endpoint reports what is running', async () => {
   const response = await request('/api/health', {});
   assert.equal(response.status, 200);

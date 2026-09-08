@@ -12,7 +12,7 @@ const QuranIndex = lazy(() => import('@/components/pages/quran-index'));
 const SurahPage = lazy(() => import('@/components/pages/surah-page'));
 const MushafPageView = lazy(() => import('@/components/pages/mushaf-page'));
 import AboutPage from '@/components/pages/about';
-import {useCivilDate, useStoredZone, storeZone} from '@/lib/clock-store';
+import {useCivilDate, usePreferredZone, storeZone} from '@/lib/clock-store';
 import {cities} from '@/lib/calendar';
 import {dayView} from '@/lib/day';
 import type {Lang} from '@/lib/i18n';
@@ -55,9 +55,12 @@ export default function DateApp({
   mushaf,
 }: Props) {
   const routeZone = cities.find((c) => c.slug === citySlug)?.zone || 'Asia/Riyadh';
-  const storedZone = useStoredZone();
+  // A city route is about that city, so its zone wins. Everywhere else the
+  // visitor's own zone is the right answer, and the route zone is only what
+  // the cached HTML had to say before the browser could correct it.
+  const preferredZone = usePreferredZone();
   const [chosenZone, setChosenZone] = useState<string | null>(null);
-  const zone = chosenZone ?? (citySlug ? routeZone : (storedZone ?? routeZone));
+  const zone = chosenZone ?? (citySlug ? routeZone : (preferredZone ?? routeZone));
   const setTimezone = (value: string) => {
     setChosenZone(value);
     storeZone(value);

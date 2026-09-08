@@ -1,6 +1,6 @@
 'use client';
 import {useCallback, useSyncExternalStore} from 'react';
-import {dateInZone} from '@/lib/calendar';
+import {dateInZone} from './calendar.ts';
 
 type Listener = () => void;
 
@@ -100,6 +100,30 @@ function readStoredZone(): string | null {
 }
 
 let storedZone: string | null | undefined;
+let device: string | null | undefined;
+
+/**
+ * The zone the visitor's own device is set to. It costs nothing, needs no
+ * permission and no network — the browser already knows it.
+ */
+export function deviceZone(): string | null {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Which zone to show: the visitor's own choice when they have made one, then
+ * the zone their device is set to. Null only where neither is available.
+ */
+export function preferredZone(): string | null {
+  if (storedZone === undefined) storedZone = readStoredZone();
+  if (storedZone) return storedZone;
+  if (device === undefined) device = deviceZone();
+  return device;
+}
 
 function subscribeToStoredZone(listener: Listener) {
   zoneListeners.add(listener);
@@ -116,13 +140,16 @@ function subscribeToStoredZone(listener: Listener) {
   };
 }
 
-/** The visitor's remembered time zone, or null on the server and first paint. */
-export function useStoredZone(): string | null {
-  return useSyncExternalStore(
-    subscribeToStoredZone,
-    () => storedZone ?? null,
-    () => null,
-  );
+/**
+ * Which zone the page should be in: the visitor's own choice when they have
+ * made one, otherwise the zone their device is set to.
+ *
+ * Null on the server and through hydration, deliberately. The HTML is one
+ * cached copy shared by every visitor, so it cannot carry anyone's zone; the
+ * correction happens in the browser, the same way the clock fills itself in.
+ */
+export function usePreferredZone(): string | null {
+  return useSyncExternalStore(subscribeToStoredZone, preferredZone, () => null);
 }
 
 export function storeZone(zone: string): void {
