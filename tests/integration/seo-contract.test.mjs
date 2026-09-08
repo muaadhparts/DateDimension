@@ -268,3 +268,25 @@ test('Structured data only claims what the page shows', async () => {
   const search = graphOf(await html('/en/prayer-times'));
   assert.ok(!search.some((node) => node['@type'] === 'Place'), 'no place before a city is chosen');
 });
+
+test('The location endpoint answers per caller and is never cached', async () => {
+  const plain = await request('/api/location', {});
+  assert.equal(plain.status, 200);
+  assert.equal(plain.headers.get('cache-control'), 'no-store');
+  assert.equal(plain.headers.get('x-robots-tag'), 'noindex');
+  assert.equal((await plain.json()).data.source, 'none', 'no edge headers in the test harness');
+
+  const edge = await worker.fetch(
+    new Request(ORIGIN + '/api/location', {
+      headers: {'cf-ipcity': 'Dubai', 'cf-ipcountry': 'AE', 'cf-iptimezone': 'Asia/Dubai'},
+    }),
+    {ASSETS: {fetch: async () => new Response('', {status: 404})}},
+    {waitUntil() {}, passThroughOnException() {}},
+  );
+  const detected = (await edge.json()).data;
+  assert.equal(detected.city, 'Dubai');
+  assert.equal(detected.source, 'edge');
+
+  const invalid = await request('/api/location?lat=91&lon=0', {});
+  assert.equal(invalid.status, 400);
+});

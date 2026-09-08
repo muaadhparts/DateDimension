@@ -1,6 +1,7 @@
 import {computePrayerTimes} from './compute.ts';
 import {coordinatesForQuery, coordinatesForSlug} from './coordinates.ts';
 import {geocodeCity} from './geocode.ts';
+import {geocodePlace, googleGeocodingAvailable} from './google-geocode.ts';
 import {
   InvalidPrayerRequest,
   METHOD_IDS,
@@ -14,6 +15,8 @@ import {
 export {InvalidPrayerRequest, PrayerDataUnavailable} from './types.ts';
 export type {PrayerData, PrayerName, PrayerRequest} from './types.ts';
 export {coordinatesForSlug} from './coordinates.ts';
+export {reverseGeocode, googleGeocodingAvailable} from './google-geocode.ts';
+export type {ResolvedPlace} from './google-geocode.ts';
 export {cityMonthTimetable} from './timetable.ts';
 export {methodSummaries} from './methods.ts';
 export type {MethodSummary} from './methods.ts';
@@ -83,8 +86,26 @@ export async function getPrayerTimes(request: PrayerRequest): Promise<PrayerData
   }
 
   const known = coordinatesForQuery(location.city, location.country);
-  const coords = known ?? (await geocodeCity(location.city, location.country));
-  return computePrayerTimes({date, ...coords, method, school});
+  if (known) return computePrayerTimes({date, ...known, method, school});
+
+  // Open-Meteo first: it is free and answers with the time zone. Google is the
+  // fallback, because it costs money and covers places Open-Meteo misses.
+  try {
+    const found = await geocodeCity(location.city, location.country);
+    return computePrayerTimes({date, ...found, method, school});
+  } catch (error) {
+    if (!googleGeocodingAvailable()) throw error;
+    const place = await geocodePlace(location.city, location.country);
+    if (!place) throw error;
+    return computePrayerTimes({
+      date,
+      lat: place.lat,
+      lon: place.lon,
+      zone: place.zone,
+      method,
+      school,
+    });
+  }
 }
 
 /** Prayer times for one of the curated city routes. Never touches the network. */

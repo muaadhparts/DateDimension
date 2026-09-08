@@ -1,5 +1,5 @@
 'use client';
-import {useState} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {Moon, Sun, Sunrise, Sunset, LocateFixed} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import SelectField from '@/components/select-field';
@@ -35,6 +35,8 @@ export default function Prayers({
     [data, setData] = useState<PrayerData | null>(initial || null),
     [busy, setBusy] = useState(false),
     [error, setError] = useState('');
+  const detected = useRef(false);
+  const [nearby, setNearby] = useState<string | null>(null);
   const [location, setLocation] = useState(preset.en + ', ' + preset.country);
   async function search(coords?: GeolocationCoordinates) {
     setBusy(true);
@@ -45,6 +47,13 @@ export default function Prayers({
       if (coords) {
         q.set('lat', String(coords.latitude));
         q.set('lon', String(coords.longitude));
+        // The browser already knows its zone; asking a service for it would be
+        // a second round trip for something we have.
+        try {
+          q.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone);
+        } catch {
+          /* older engines: the server falls back to UTC */
+        }
       } else {
         q.set('city', city.trim());
         q.set('country', country.trim());
@@ -54,6 +63,8 @@ export default function Prayers({
       if (!r.ok || !j.data?.timings) throw Error();
       setData(j.data);
       setLocation(coords ? t('موقعك الحالي', 'Your current location') : city + ', ' + country);
+
+      if (coords) void nameCurrentPlace(coords);
     } catch {
       setError(
         t(
@@ -65,6 +76,54 @@ export default function Prayers({
       setBusy(false);
     }
   }
+  /** Turns the granted coordinates into a place name, once the times are shown. */
+  async function nameCurrentPlace(coords: GeolocationCoordinates) {
+    try {
+      const q = new URLSearchParams({
+        lat: String(coords.latitude),
+        lon: String(coords.longitude),
+        lang: ar ? 'ar' : 'en',
+      });
+      const response = await fetch('/api/location?' + q, {signal: AbortSignal.timeout(10000)});
+      if (!response.ok) return;
+      const {data} = await response.json();
+      if (!data?.city) return;
+      setCity(data.city);
+      if (data.country) setCountry(data.country);
+      setLocation([data.city, data.country].filter(Boolean).join(', '));
+    } catch {
+      // The times are already on screen; only the name is missing.
+    }
+  }
+
+  /**
+   * Pre-fills the form from the visitor's connection on first load, so the page
+   * opens on their own city instead of a default one. It never overwrites a
+   * city that came from the route or that the visitor typed, and it asks for no
+   * permission — the accuracy is city-level and can be wrong behind a VPN,
+   * which is why it fills the form rather than replacing the shown times.
+   */
+  useEffect(() => {
+    if (citySlug || detected.current) return;
+    detected.current = true;
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch('/api/location', {signal: AbortSignal.timeout(8000)});
+        if (!response.ok) return;
+        const {data} = await response.json();
+        if (cancelled || !data?.city) return;
+        setCity(data.city);
+        setNearby(data.city);
+      } catch {
+        // The default city stays.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [citySlug]);
+
   function locate() {
     if (!navigator.geolocation) {
       setError(t('المتصفح لا يدعم تحديد الموقع', 'Geolocation is not supported'));
@@ -163,6 +222,26 @@ export default function Prayers({
             {t('استخدم موقعي', 'Use my location')}
           </button>
         </div>
+        {nearby && (
+          <p className="sub" style={{marginTop: 14}} role="status">
+            {t(`يبدو أنك في ${nearby}.`, `You seem to be in ${nearby}.`)}{' '}
+            <button
+              className="tag"
+              onClick={() => {
+                setNearby(null);
+                void search();
+              }}
+            >
+              {t('اعرض مواقيتها', 'Show its times')}
+            </button>{' '}
+            <span className="muted">
+              {t(
+                'تقدير من اتصالك وقد لا يكون دقيقاً.',
+                'Estimated from your connection, and can be wrong.',
+              )}
+            </span>
+          </p>
+        )}
         <p className="note">
           {t(
             'يدعم البحث المدن والدول حول العالم؛ استخدم الاسم الكامل لتجنب الالتباس، ثم تحقق من المنطقة الزمنية في النتيجة. اضغط عرض المواقيت بعد تعديل الخيارات.',
