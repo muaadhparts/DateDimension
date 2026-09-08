@@ -32,7 +32,15 @@ Nothing about the visitor may reach the HTML: one cached copy is served to every
 
 ## Caching
 
-Pages are cached by Cloudflare using the `s-maxage` the application computes: a copy stays valid until midnight in the zone the page is about, capped at an hour. Everything time-dependent — the clock, the world clocks — is rendered in the browser, so nothing in the HTML goes stale before then. RSC navigations and `/api/` are never cached.
+Pages are cached by Cloudflare using the `s-maxage` the application computes: a copy stays valid until midnight in the zone the page is about, capped at an hour so a deployment lands. Pages with no date in them at all — the Quran, the mushaf, about — are capped the same way for the same reason. Everything time-dependent, the clock and the world clocks, is rendered in the browser, so nothing in the HTML goes stale before then. RSC navigations and `/api/` are never cached.
+
+The worker's own `caches.default` key carries the build id, so a deployment orphans every copy it stored instead of waiting for it to expire. Purging through the Cloudflare API would need a Cache Purge permission this account's tokens do not have.
+
+## Routing
+
+`worker/index.ts` is the only module both deployments share. It redirects `/` to `/ar`, rewrites any unrecognised first path segment under `/ar` so an unknown route renders a real 404 inside a lang-aware `<html>`, and applies the cache headers.
+
+A request is left alone when its **last** path segment contains a dot — that is how `/favicon.svg` and `/fonts/amiri-quran-arabic.woff2` reach the asset store. Anything new under `public/` must look like a file by that test, or the rewrite turns it into the app's 404. It has happened twice: the icon set, and then the mushaf font, which shipped 404ing because the check used to look at the first segment only.
 
 ## Self-hosted deployment (Laravel Forge)
 
@@ -54,10 +62,12 @@ Date conversion is local via ICU/Intl (`islamic-umalqura`). Dates can differ fro
 
 - `npm run typecheck`, `npm run lint`, `npm run test:unit` — no build, a few seconds. Run these before pushing.
 - `npm test` — the above plus a production build and the integration suite, which drives the built worker.
-- `tests/unit/` covers Hijri conversion, prayer computation against recorded reference times, query validation and the cache policy. `tests/integration/` covers routing, rendered metadata and the sitemap.
+- `tests/unit/` covers Hijri conversion, prayer computation against recorded reference times, query validation, the cache policy, rate limiting, visitor location, the zone resolver and the Quran page data. `tests/integration/` drives the built worker: canonical URLs and hreflang, the JSON-LD graph, robots and sitemap, server-rendered prayer times with the network disabled, mushaf and surah rendering, static-file routing and both API routes.
 - CI runs all of it on every push and pull request (`.github/workflows/ci.yml`). The site is deployed only after CI is green (`.github/workflows/deploy.yml`), and the deployment is confirmed by polling `/api/health` for the commit it stamped.
 
 Not covered: real-browser rendering, field Core Web Vitals, Rich Results validation and Google indexing. This repository claims none of them.
+
+`VALIDATION.md` records what was checked at a given commit and what was deliberately not. `CHANGELOG.md` records what changed and why. Neither is authoritative about what is deployed — `GET /api/health` is.
 
 ## Google guidance applied
 
