@@ -39,3 +39,21 @@ test('Malformed coordinates are dropped rather than passed through as NaN', () =
   assert.equal(detected.lat, null);
   assert.equal(detected.source, 'edge', 'a city alone is still a detection');
 });
+
+test('The country alone still picks a better default than Riyadh for everyone', () => {
+  const yemen = locationFromRequest(new Request(URL_BASE, {headers: {'cf-ipcountry': 'YE'}}));
+  assert.equal(yemen.city, null, 'the country is not a city');
+  assert.equal(yemen.citySlug, 'sanaa');
+  assert.equal(yemen.source, 'country');
+
+  const unknown = locationFromRequest(new Request(URL_BASE, {headers: {'cf-ipcountry': 'FR'}}));
+  assert.equal(unknown.citySlug, null, 'no curated city in France');
+  assert.equal(unknown.source, 'none');
+
+  // A real city from the edge outranks the country guess.
+  const precise = locationFromRequest(
+    new Request(URL_BASE, {headers: {'cf-ipcountry': 'SA', 'cf-ipcity': 'Jeddah'}}),
+  );
+  assert.equal(precise.city, 'Jeddah');
+  assert.equal(precise.source, 'edge');
+});
