@@ -21,6 +21,31 @@ export function surahSummary(number: number): SurahSummary | undefined {
   return SURAHS.find((surah) => surah.number === number);
 }
 
+export type MushafBlock = {
+  surah: number;
+  name: string;
+  englishName: string;
+  /** Printed above this block, when the surah starts here. */
+  basmala: boolean;
+  juz: number;
+  verses: {number: number; text: string; sajda: boolean}[];
+};
+
+export type MushafPage = {page: number; juz: number; blocks: MushafBlock[]};
+
+export const MUSHAF_PAGES = 604;
+
+/** One page of the Madani print, with exactly the verses printed on it. */
+export async function loadMushafPage(page: number): Promise<MushafPage | null> {
+  if (!Number.isInteger(page) || page < 1 || page > MUSHAF_PAGES) return null;
+  try {
+    const loaded = await import(`../../data/quran/pages/${page}.json`, {with: {type: 'json'}});
+    return (loaded.default ?? loaded) as MushafPage;
+  } catch {
+    return null;
+  }
+}
+
 /** Loaded one surah at a time, so a page never carries the other 113. */
 export async function loadSurah(number: number): Promise<Surah | null> {
   if (!Number.isInteger(number) || number < 1 || number > 114) return null;

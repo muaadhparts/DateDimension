@@ -81,9 +81,10 @@ test('The sitemap lists exactly the routes that exist, on the real origin', asyn
   const body = await (await request('/sitemap.xml', {})).text();
   const urls = [...body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 
-  // 7 section pages + 8 cities + 114 surahs, in each language.
-  assert.equal(urls.length, 258);
-  assert.equal(new Set(urls).size, 258, 'no duplicates');
+  // 7 section pages + 8 cities + 114 surahs + 604 mushaf pages, per language.
+  // Bare /mushaf is left out: it only opens page 1, which is listed already.
+  assert.equal(urls.length, 1466);
+  assert.equal(new Set(urls).size, 1466, 'no duplicates');
   assert.ok(
     urls.every((url) => url.startsWith(`${ORIGIN}/`)),
     'every URL uses the real origin',
@@ -93,20 +94,24 @@ test('The sitemap lists exactly the routes that exist, on the real origin', asyn
   for (const lang of ['ar', 'en']) {
     assert.equal(
       urls.filter((url) => url.startsWith(`${ORIGIN}/${lang}`)).length,
-      129,
-      `${lang} has 129 URLs`,
+      733,
+      `${lang} has 733 URLs`,
     );
     for (const path of [
       '',
       '/converter',
       '/prayer-times',
       '/quran',
+      '/quran/114',
+      '/mushaf/1',
+      '/mushaf/604',
       '/occasions',
       '/months',
       '/about',
     ]) {
       assert.ok(urls.includes(`${ORIGIN}/${lang}${path}`), `${lang}${path} is listed`);
     }
+    assert.ok(!urls.includes(`${ORIGIN}/${lang}/mushaf`), 'bare /mushaf is not listed');
     for (const city of [
       'riyadh',
       'makkah',
@@ -146,6 +151,32 @@ test('A city page renders its prayer times server-side, with no provider call', 
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+test('A mushaf page carries its own verses, and only those', async () => {
+  const {loadMushafPage} = await import('../../lib/quran/index.ts');
+  const first = await loadMushafPage(1);
+  const second = await loadMushafPage(2);
+  const body = await html('/ar/mushaf/1');
+
+  for (const verse of first.blocks[0].verses) {
+    assert.ok(body.includes(verse.text), `verse ${verse.number} of page 1 is printed`);
+  }
+  assert.ok(!body.includes(second.blocks[0].verses[0].text), 'and the opening of page 2 is not');
+  assert.match(body, /rel="next"/, 'it links to the page after it');
+  assert.ok(!body.includes('rel="prev"'), 'page 1 has nothing before it');
+  assert.match(body, new RegExp(`<link rel="canonical" href="${ORIGIN}/ar/mushaf/1"`));
+
+  const bare = await request('/ar/mushaf');
+  assert.equal(bare.status, 200, 'the mushaf opens on page 1');
+  assert.match(
+    await bare.text(),
+    new RegExp(`<link rel="canonical" href="${ORIGIN}/ar/mushaf/1"`),
+    'and points at the numbered address',
+  );
+
+  const missing = await request('/ar/mushaf/605', {});
+  assert.equal(missing.status, 404, 'there is no page 605');
 });
 
 test('The health endpoint reports what is running', async () => {

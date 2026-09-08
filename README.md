@@ -9,6 +9,7 @@ Bilingual Arabic/English date and time information site. Responsive RTL/LTR inte
 - Gregorian month names in common Arabic, Levantine/Iraqi and Maghreb variants, plus English. Hijri names are deliberately separate: Muharram is not January.
 - Worldwide prayer search by full city/country or consented geolocation, date, method and Asr convention. Eight curated city routes offer direct search landing pages without mass-generated doorway pages.
 - Upcoming Islamic calendar occasions with explicit local-observation limitations. Eid prayer is never fabricated from sunrise.
+- The Quran in the Uthmani script, served from this repository: 114 surahs searchable by Arabic or English name or by number, and the mushaf itself at `/{lang}/mushaf/{1-604}`, each page carrying exactly the verses printed on that page of the Madani edition. The text is Tanzil's, reproduced unmodified and attributed; the only separation made is printing the Basmala above a surah, as every mushaf does. Set in Amiri Quran, self-hosted because the CSP allows fonts from this origin only.
 - Unique server-rendered metadata, canonical URLs, reciprocal hreflang, sitemap, robots, WebSite/WebPage/BreadcrumbList JSON-LD, valid 404s and root redirect.
 
 ## Run

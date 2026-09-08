@@ -57,6 +57,11 @@ export default function QuranIndex({lang, href}: {lang: Lang; href: (path?: stri
             'Type the name in Arabic or English, or the number. Diacritics and hamza forms do not affect the search.',
           )}
         </p>
+        <p className="note">
+          <a href={href('mushaf/1')}>
+            {t('أو تصفّح المصحف صفحة بصفحة', 'Or read the mushaf page by page')}
+          </a>
+        </p>
       </section>
 
       {matches.length === 0 ? (

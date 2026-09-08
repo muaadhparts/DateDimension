@@ -12,7 +12,7 @@ import {
   coordinatesForSlug,
 } from '@/lib/prayers';
 import {HOME_FAQ} from '@/lib/faq';
-import {surahSummary, loadSurah, bareName} from '@/lib/quran';
+import {surahSummary, loadSurah, loadMushafPage, bareName, MUSHAF_PAGES} from '@/lib/quran';
 import {pick} from '@/lib/i18n';
 export const revalidate = 60;
 type Params = {lang: string; path?: string[]};
@@ -26,20 +26,30 @@ function resolve(p: Params) {
   const surahNumber =
     page === 'quran' && second && /^\d{1,3}$/.test(second) ? Number(second) : undefined;
   const surah = surahNumber ? surahSummary(surahNumber) : undefined;
+  // The mushaf opens on page 1 when no page is named, the way a copy opens.
+  const asked = second && /^\d{1,3}$/.test(second) ? Number(second) : undefined;
+  const mushafPage =
+    page !== 'mushaf'
+      ? undefined
+      : second === undefined
+        ? 1
+        : asked && asked >= 1 && asked <= MUSHAF_PAGES
+          ? asked
+          : undefined;
 
   if (
     !isLang(p.lang) ||
     !ROUTE_KEYS.includes(page as never) ||
     path.length > 2 ||
-    (path.length === 2 && !city && !surah)
+    (path.length === 2 && !city && !surah && !mushafPage)
   ) {
     notFound();
   }
-  return {page, city, surah, path: path.join('/')};
+  return {page, city, surah, mushafPage, path: path.join('/')};
 }
 export async function generateMetadata({params}: {params: Promise<Params>}): Promise<Metadata> {
   const p = await params;
-  const {page, city, surah, path} = resolve(p);
+  const {page, city, surah, mushafPage, path} = resolve(p);
   const ar = p.lang === 'ar';
   if (surah) {
     const name = ar ? bareName(surah) : surah.englishName;
@@ -78,6 +88,49 @@ export async function generateMetadata({params}: {params: Promise<Params>}): Pro
         card: 'summary_large_image',
         title: surahTitle,
         description: surahDescription,
+        images: [`${SITE_URL}/og-${p.lang}.png`],
+      },
+    };
+  }
+
+  if (mushafPage) {
+    const loaded = await loadMushafPage(mushafPage);
+    const names = (loaded?.blocks || []).map((block) => (ar ? bareName(block) : block.englishName));
+    const list = ar ? names.join(' و') : names.join(', ');
+    const mushafTitle = ar
+      ? `صفحة ${mushafPage} من المصحف بالرسم العثماني`
+      : `Page ${mushafPage} of the mushaf, in Uthmani script`;
+    // The page is canonical at its numbered address; /mushaf alone opens it.
+    const mushafUrl = `${SITE_URL}/${p.lang}/mushaf/${mushafPage}`;
+    const mushafDescription = ar
+      ? `الصفحة ${mushafPage} من المصحف الشريف بترقيم طبعة المدينة، تحمل آياتها كما هي مطبوعة${list ? ` من ${list}` : ''}، مع الانتقال إلى الصفحة السابقة والتالية.`
+      : `Page ${mushafPage} of the mushaf in the Madani numbering, carrying exactly the verses printed on it${list ? ` from ${list}` : ''}, with links to the pages before and after.`;
+    return {
+      title: `${mushafTitle} — ${ar ? 'يومك الآن' : 'Your Day Now'}`,
+      description: mushafDescription,
+      alternates: {
+        canonical: mushafUrl,
+        languages: {
+          ar: `${SITE_URL}/ar/mushaf/${mushafPage}`,
+          en: `${SITE_URL}/en/mushaf/${mushafPage}`,
+          'x-default': `${SITE_URL}/ar/mushaf/${mushafPage}`,
+        },
+      },
+      robots: {index: INDEXABLE, follow: true},
+      openGraph: {
+        title: mushafTitle,
+        description: mushafDescription,
+        url: mushafUrl,
+        siteName: 'Your Day Now',
+        locale: ar ? 'ar_SA' : 'en_GB',
+        alternateLocale: ar ? 'en_GB' : 'ar_SA',
+        type: 'article',
+        images: [{url: `${SITE_URL}/og-${p.lang}.png`, width: 1200, height: 630, alt: mushafTitle}],
+      },
+      twitter: {
+        card: 'summary_large_image',
+        title: mushafTitle,
+        description: mushafDescription,
         images: [`${SITE_URL}/og-${p.lang}.png`],
       },
     };
@@ -137,10 +190,12 @@ export async function generateMetadata({params}: {params: Promise<Params>}): Pro
 }
 export default async function Page({params}: {params: Promise<Params>}) {
   const p = await params;
-  const {page, city, surah: surahMeta, path} = resolve(p);
+  const {page, city, surah: surahMeta, mushafPage, path} = resolve(p);
   const now = new Date();
   const zone = city?.zone || 'Asia/Riyadh';
   const surah = surahMeta ? await loadSurah(surahMeta.number) : null;
+  const mushaf = mushafPage ? await loadMushafPage(mushafPage) : null;
+  if (mushafPage && !mushaf) notFound();
   let prayer = null;
   let timetable = null;
   if (page === 'prayer-times') {
@@ -253,6 +308,7 @@ export default async function Page({params}: {params: Promise<Params>}) {
         initialTimetable={timetable}
         methodDetails={page === 'prayer-times' ? methodSummaries() : undefined}
         surah={surah}
+        mushaf={mushaf}
       />
     </>
   );

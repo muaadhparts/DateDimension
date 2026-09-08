@@ -1,7 +1,7 @@
 import type {Bi} from './i18n.ts';
 
 export type RouteKey =
-  '' | 'converter' | 'prayer-times' | 'quran' | 'occasions' | 'months' | 'about';
+  '' | 'converter' | 'prayer-times' | 'quran' | 'mushaf' | 'occasions' | 'months' | 'about';
 
 export type RouteContent = {
   key: RouteKey;
@@ -18,6 +18,10 @@ export type RouteContent = {
   hasCityPages: boolean;
   /** Whether /{lang}/{key}/{1-114} is a valid shape. */
   hasSurahPages?: boolean;
+  /** Whether /{lang}/{key}/{1-604} is a valid shape. */
+  hasMushafPages?: boolean;
+  /** Shown in the header navigation. */
+  inNav?: boolean;
 };
 
 /**
@@ -91,6 +95,20 @@ export const ROUTES: readonly RouteContent[] = [
     hasSurahPages: true,
   },
   {
+    key: 'mushaf',
+    nav: ['المصحف', 'Mushaf'],
+    title: ['المصحف', 'The Mushaf'],
+    metaTitle: ['تصفح المصحف صفحة بصفحة', 'Read the mushaf page by page'],
+    description: [
+      'تصفح المصحف الشريف صفحة بصفحة كما في طبعة المدينة، كل صفحة تحمل آياتها كما هي مطبوعة، مع الانتقال بين الصفحات.',
+      'Read the mushaf page by page as printed in the Madani edition, each page carrying exactly its own verses, with page-to-page navigation.',
+    ],
+    intro: ['صفحة بصفحة، كما في المصحف المطبوع.', 'Page by page, as printed.'],
+    hasCityPages: false,
+    hasMushafPages: true,
+    inNav: false,
+  },
+  {
     key: 'occasions',
     nav: ['المناسبات', 'Occasions'],
     title: ['المناسبات الإسلامية', 'Islamic occasions'],
@@ -139,4 +157,4 @@ const byKey = new Map(ROUTES.map((route) => [route.key as string, route]));
 
 export const routeFor = (key: string): RouteContent | undefined => byKey.get(key);
 /** Pages shown in the header navigation, in order. */
-export const NAV_ROUTES = ROUTES.filter((route) => route.key !== 'about');
+export const NAV_ROUTES = ROUTES.filter((route) => route.inNav !== false && route.key !== 'about');

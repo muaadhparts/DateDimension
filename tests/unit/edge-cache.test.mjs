@@ -24,6 +24,7 @@ test('Every route class gets a policy, and unknown paths get none', () => {
   assert.equal(policyFor('/ar/about', now).sMaxAge, 86_400, 'static page');
   assert.equal(policyFor('/ar/quran', now).sMaxAge, 86_400, 'the surah index does not change');
   assert.equal(policyFor('/ar/quran/18', now).sMaxAge, 86_400, 'nor does a surah');
+  assert.equal(policyFor('/ar/mushaf/1', now).sMaxAge, 86_400, 'nor a page of the mushaf');
   assert.ok(policyFor('/ar', now).sMaxAge <= 3600, 'home page');
   assert.ok(policyFor('/en/converter', now).sMaxAge <= 3600, 'tool page');
   assert.equal(policyFor('/robots.txt', now).sMaxAge, 3600);
