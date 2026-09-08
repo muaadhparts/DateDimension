@@ -6,6 +6,7 @@ import SelectField from '@/components/select-field';
 import {cities} from '@/lib/calendar';
 import type {MethodSummary, PrayerData, PrayerName, Timetable} from '@/lib/prayers';
 import PrayerTimetable from '@/components/pages/prayer-timetable';
+import {deviceZone} from '@/lib/clock-store';
 import MethodGuide from '@/components/pages/method-guide';
 
 export default function Prayers({
@@ -37,51 +38,76 @@ export default function Prayers({
     [error, setError] = useState('');
   const detected = useRef(false);
   const [nearby, setNearby] = useState<string | null>(null);
+  const [estimated, setEstimated] = useState(false);
   const [location, setLocation] = useState(preset.en + ', ' + preset.country);
-  async function search(coords?: GeolocationCoordinates) {
+
+  /** What to compute for: the form as it stands, a named place, or a point. */
+  type Target =
+    | {kind: 'form'}
+    | {kind: 'place'; city: string; country: string}
+    | {kind: 'coords'; lat: number; lon: number; zone?: string | null; label?: string | null};
+
+  /**
+   * `guess` marks a search the visitor did not ask for — one started from
+   * their connection. Those keep whatever is already on screen until the new
+   * times arrive, and stay quiet when they fail: nobody pressed anything, so
+   * an error message would be about a request they never made.
+   */
+  async function search(target: Target = {kind: 'form'}, guess = false) {
     setBusy(true);
     setError('');
-    setData(null);
+    if (!guess) setData(null);
     try {
       const q = new URLSearchParams({date: dt, method, school});
-      if (coords) {
-        q.set('lat', String(coords.latitude));
-        q.set('lon', String(coords.longitude));
+      let label: string;
+      if (target.kind === 'coords') {
+        q.set('lat', String(target.lat));
+        q.set('lon', String(target.lon));
         // The browser already knows its zone; asking a service for it would be
         // a second round trip for something we have.
-        try {
-          q.set('tz', Intl.DateTimeFormat().resolvedOptions().timeZone);
-        } catch {
-          /* older engines: the server falls back to UTC */
-        }
+        const zone = target.zone || deviceZone();
+        if (zone) q.set('tz', zone);
+        label =
+          target.label ||
+          (guess
+            ? t('موقعك التقريبي', 'Your approximate location')
+            : t('موقعك الحالي', 'Your current location'));
       } else {
-        q.set('city', city.trim());
-        q.set('country', country.trim());
+        const place = target.kind === 'place' ? target : {city, country};
+        q.set('city', place.city.trim());
+        q.set('country', place.country.trim());
+        label = place.city + ', ' + place.country;
       }
       const r = await fetch('/api/prayers?' + q, {signal: AbortSignal.timeout(15000)});
       const j = await r.json();
       if (!r.ok || !j.data?.timings) throw Error();
       setData(j.data);
-      setLocation(coords ? t('موقعك الحالي', 'Your current location') : city + ', ' + country);
+      setLocation(label);
+      setEstimated(guess);
+      if (guess) setNearby(null);
 
-      if (coords) void nameCurrentPlace(coords);
+      // Only a granted position deserves a name lookup; the edge's own guess
+      // is not precise enough to spend a billable geocode on.
+      if (target.kind === 'coords' && !guess) void nameCurrentPlace(target);
     } catch {
-      setError(
-        t(
-          'تعذر جلب المواقيت. تحقق من اسم المدينة والدولة واتصالك ثم أعد المحاولة.',
-          'Could not load prayer times. Check the city, country and connection, then retry.',
-        ),
-      );
+      if (!guess) {
+        setError(
+          t(
+            'تعذر جلب المواقيت. تحقق من اسم المدينة والدولة واتصالك ثم أعد المحاولة.',
+            'Could not load prayer times. Check the city, country and connection, then retry.',
+          ),
+        );
+      }
     } finally {
       setBusy(false);
     }
   }
   /** Turns the granted coordinates into a place name, once the times are shown. */
-  async function nameCurrentPlace(coords: GeolocationCoordinates) {
+  async function nameCurrentPlace(point: {lat: number; lon: number}) {
     try {
       const q = new URLSearchParams({
-        lat: String(coords.latitude),
-        lon: String(coords.longitude),
+        lat: String(point.lat),
+        lon: String(point.lon),
         lang: ar ? 'ar' : 'en',
       });
       const response = await fetch('/api/location?' + q, {signal: AbortSignal.timeout(10000)});
@@ -97,11 +123,14 @@ export default function Prayers({
   }
 
   /**
-   * Pre-fills the form from the visitor's connection on first load, so the page
-   * opens on their own city instead of a default one. It never overwrites a
-   * city that came from the route or that the visitor typed, and it asks for no
-   * permission — the accuracy is city-level and can be wrong behind a VPN,
-   * which is why it fills the form rather than replacing the shown times.
+   * Opens the page on the visitor's own place instead of a default one.
+   *
+   * The cached HTML has to arrive with some city in it, and that city is the
+   * same for everyone. So on first load the page asks where the connection
+   * comes from and, if it learns anything usable, computes that place and
+   * replaces what is shown. It asks for no permission — the accuracy is
+   * city-level and can be wrong behind a VPN, which is why the result says it
+   * is an estimate and the form stays editable.
    */
   useEffect(() => {
     if (citySlug || detected.current) return;
@@ -114,19 +143,40 @@ export default function Prayers({
         const {data} = await response.json();
         if (cancelled) return;
 
-        if (data?.city) {
-          setCity(data.city);
-          setNearby(data.city);
+        // Coordinates are the most precise thing the edge offers, and they
+        // need no country name to be computable.
+        if (typeof data?.lat === 'number' && typeof data?.lon === 'number') {
+          // The form is left alone here: the edge gives a city name without a
+          // country, and writing one into a pair that needs both would leave
+          // the visitor one keystroke from searching "Tokyo, Saudi Arabia".
+          await search(
+            {
+              kind: 'coords',
+              lat: data.lat,
+              lon: data.lon,
+              zone: data.timezone,
+              label: data.city,
+            },
+            true,
+          );
           return;
         }
 
-        // No city from the edge, but the country is enough to open on a
-        // curated city there rather than on the default one.
+        // No coordinates, but the country is enough to open on a curated city
+        // there rather than on the default one.
         const match = data?.citySlug ? cities.find((c) => c.slug === data.citySlug) : undefined;
         if (match && match.slug !== cities[0].slug) {
           setCity(match.en);
           setCountry(match.country);
-          setNearby(ar ? match.ar : match.en);
+          await search({kind: 'place', city: match.en, country: match.country}, true);
+          return;
+        }
+
+        // A city name with no country cannot be searched, so it only fills
+        // the form and offers itself.
+        if (data?.city) {
+          setCity(data.city);
+          setNearby(data.city);
         }
       } catch {
         // The default city stays.
@@ -135,7 +185,10 @@ export default function Prayers({
     return () => {
       cancelled = true;
     };
-  }, [citySlug, ar]);
+    // Runs once, on mount: re-detecting after the visitor edits the form
+    // would undo what they typed.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [citySlug]);
 
   function locate() {
     if (!navigator.geolocation) {
@@ -143,7 +196,7 @@ export default function Prayers({
       return;
     }
     navigator.geolocation.getCurrentPosition(
-      (p) => search(p.coords),
+      (p) => search({kind: 'coords', lat: p.coords.latitude, lon: p.coords.longitude}),
       () =>
         setError(
           t(
@@ -272,6 +325,14 @@ export default function Prayers({
               <p>
                 {data.date?.readable} · {data.meta?.method?.name}
               </p>
+              {estimated && (
+                <p className="sub" role="status">
+                  {t(
+                    'المكان مُقدَّر من اتصالك وقد لا يكون دقيقاً. اكتب مدينتك واضغط «عرض المواقيت» إن لم يكن صحيحاً.',
+                    'Estimated from your connection and can be wrong. Enter your city and press Show times if it is not right.',
+                  )}
+                </p>
+              )}
               <div className="prayers">
                 {names.map(([key, a, b, Icon]) => (
                   <div className="prayer" key={key}>

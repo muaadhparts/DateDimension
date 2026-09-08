@@ -38,6 +38,19 @@ export default function AboutPage({view}: {view: DayView}) {
           'Occasion dates are calendar estimates, not confirmation of public holidays. Local authorities determine Eid dates and prayer schedules. We do not present an estimate as an official mosque time.',
         )}
       </p>
+      <h2>{t('أين أنت', 'Where you are')}</h2>
+      <p>
+        {t(
+          'الصفحات تُخزَّن نسخة واحدة للجميع، فلا يمكن أن تصل إليك وفيها منطقتك الزمنية. لذلك يقرأها متصفحك بنفسه بعد فتح الصفحة — من إعداد جهازك، بلا إذن ولا طلب شبكة — ويصحّح الساعة والتاريخ. وإن اخترت منطقة من القائمة فاختيارك يسبق إعداد الجهاز ويُحفظ في متصفحك.',
+          'Every page is one cached copy shared by all visitors, so it cannot arrive carrying your time zone. Your browser reads it instead once the page opens — from your device settings, with no permission prompt and no network request — and corrects the clock and the date. If you pick a zone from the list, your choice comes before the device setting and is remembered in your browser.',
+        )}
+      </p>
+      <p>
+        {t(
+          'صفحة المواقيت تسأل مرة واحدة عن الدولة أو المدينة التي يأتي منها اتصالك، وتعرض مواقيت ذلك المكان بدل مكان افتراضي. هذا تقدير من عنوان الاتصال وقد يخطئ خلف VPN، ولذلك يُكتب أنه تقدير ويبقى الحقل قابلاً للتعديل. موقعك الدقيق لا يُقرأ إلا بضغطك «استخدم موقعي» وبإذن المتصفح.',
+          'The prayer page asks once which country or city your connection comes from, and shows that place instead of a default one. It is an estimate from your connection and can be wrong behind a VPN, which is why it is labelled as an estimate and the field stays editable. Your precise location is read only when you press “Use my location” and allow it.',
+        )}
+      </p>
       <h2>{t('الخصوصية', 'Privacy')}</h2>
       <p>
         {t(
