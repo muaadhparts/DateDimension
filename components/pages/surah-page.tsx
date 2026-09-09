@@ -1,5 +1,7 @@
 'use client';
-import {useRef, useState} from 'react';
+import AppLink from '@/components/layout/app-link';
+import QuranArtwork from '@/components/quran-artwork';
+import {useLayoutEffect, useRef, useState} from 'react';
 import {ArrowLeft, ArrowRight} from 'lucide-react';
 import {surahSummary, type Surah, type Verse} from '@/lib/quran';
 import {BASMALA, bareName} from '@/lib/quran/text';
@@ -49,11 +51,16 @@ export default function SurahPage({
 
   const [current, setCurrent] = useState(0);
   const reader = useRef<HTMLDivElement>(null);
+  const shouldScroll = useRef(false);
+  useLayoutEffect(() => {
+    if (!shouldScroll.current) return;
+    shouldScroll.current = false;
+    reader.current?.scrollIntoView({block: 'start'});
+    reader.current?.focus({preventScroll: true});
+  }, [current]);
   const turn = (to: number) => {
     setCurrent(to);
-    // Pages differ in length, so without this a turn can leave the reader
-    // looking at the middle of the new one.
-    reader.current?.scrollIntoView({block: 'start'});
+    shouldScroll.current = true;
   };
 
   return (
@@ -93,7 +100,8 @@ export default function SurahPage({
         </div>
       </section>
 
-      <div ref={reader}>
+      <div ref={reader} className="quran-reader" tabIndex={-1}>
+        <p className="sr-only" role="status">{t(`صفحة ${spreads[current].page} من المصحف`, `Mushaf page ${spreads[current].page}`)}</p>
         {spreads.map((spread, index) => (
           <section
             key={spread.page}
@@ -105,6 +113,9 @@ export default function SurahPage({
               <span lang={ar ? 'ar' : undefined}>{ar ? bareName(surah) : surah.englishName}</span>
               <span className="sub">{t(`الجزء ${spread.juz}`, `Juz ${spread.juz}`)}</span>
             </p>
+            {index === current && <QuranArtwork key={spread.page} page={spread.page} ar={ar} />}
+            <details className="quran-text">
+              <summary>{t('نص آيات السورة في هذه الصفحة', 'This surah’s verses on this page')}</summary>
             <div lang="ar" dir="rtl">
               {index === 0 && surah.basmala && (
                 <>
@@ -124,6 +135,7 @@ export default function SurahPage({
                 ))}
               </p>
             </div>
+            </details>
             <p className="mushaf-page-number" lang="ar">
               {spread.page.toLocaleString('ar-EG')}
             </p>
@@ -140,12 +152,12 @@ export default function SurahPage({
         ) : (
           <span />
         )}
-        <a className="tag" href={href(`mushaf/${spreads[current].page}`)}>
+        <AppLink className="tag" href={href(`mushaf/${spreads[current].page}`)}>
           {t(
             `${current + 1} من ${spreads.length} · افتحها في المصحف`,
             `${current + 1} of ${spreads.length} · open in the mushaf`,
           )}
-        </a>
+        </AppLink>
         {current < spreads.length - 1 ? (
           <button onClick={() => turn(current + 1)}>
             {t(`الصفحة ${spreads[current + 1].page}`, `Page ${spreads[current + 1].page}`)}
@@ -158,27 +170,27 @@ export default function SurahPage({
 
       <nav className="surah-nav" aria-label={t('التنقل بين السور', 'Surah navigation')}>
         {previous ? (
-          <a href={href(`quran/${previous.number}`)} rel="prev">
+          <AppLink href={href(`quran/${previous.number}`)} rel="prev">
             <Back size={18} aria-hidden="true" />
             <span>
               <span className="sub">{t('السابقة', 'Previous')}</span>
               <b lang="ar">{bareName(previous)}</b>
             </span>
-          </a>
+          </AppLink>
         ) : (
           <span />
         )}
-        <a className="tag" href={href('quran')}>
+        <AppLink className="tag" href={href('quran')}>
           {t('كل السور', 'All surahs')}
-        </a>
+        </AppLink>
         {next ? (
-          <a href={href(`quran/${next.number}`)} rel="next">
+          <AppLink href={href(`quran/${next.number}`)} rel="next">
             <span>
               <span className="sub">{t('التالية', 'Next')}</span>
               <b lang="ar">{bareName(next)}</b>
             </span>
             <Forward size={18} aria-hidden="true" />
-          </a>
+          </AppLink>
         ) : (
           <span />
         )}
@@ -186,8 +198,8 @@ export default function SurahPage({
 
       <p className="note">
         {t(
-          'الصفحات بترقيم مصحف المدينة المنورة، وتُعرض هنا آيات هذه السورة وحدها؛ أما الصفحة كاملة بما فيها من سورة أخرى فهي في صفحات المصحف. النص بالرسم العثماني من مشروع تنزيل (tanzil.net)، منقول دون تعديل.',
-          'Pages follow the Madani mushaf numbering, and only this surah’s verses are shown here; the whole printed page, including any other surah on it, is in the mushaf view. Uthmani script from the Tanzil project (tanzil.net), reproduced without modification.',
+          'الصفحات بترقيم مصحف المدينة المنورة، الصورة تعرض صفحة المصحف كاملة، وقد تضم آيات من سورة مجاورة. قسم النص يعرض آيات السورة المختارة وحدها. النص بالرسم العثماني من مشروع تنزيل (tanzil.net)، منقول دون تعديل.',
+          'Pages follow the Madani mushaf numbering, the image shows the entire printed page and may include a neighbouring surah. The text section contains only the selected surah’s verses. Uthmani script from the Tanzil project (tanzil.net), reproduced without modification.',
         )}
       </p>
     </>

@@ -112,17 +112,17 @@ export default function DateApp({
         />
       )}
       {page === 'quran' && (
-        <Suspense fallback={<section className="panel empty" aria-busy="true" />}>
+        <Suspense fallback={<section className="panel empty" role="status" aria-busy="true">{view.ar ? 'جارٍ تحميل المصحف…' : 'Loading the Quran…'}</section>}>
           {surah ? (
-            <SurahPage surah={surah} lang={lang} href={href} />
+            <SurahPage key={surah.number} surah={surah} lang={lang} href={href} />
           ) : (
             <QuranIndex lang={lang} href={href} />
           )}
         </Suspense>
       )}
       {page === 'mushaf' && mushaf && (
-        <Suspense fallback={<section className="panel empty" aria-busy="true" />}>
-          <MushafPageView page={mushaf} lang={lang} href={href} />
+        <Suspense fallback={<section className="panel empty" role="status" aria-busy="true">{view.ar ? 'جارٍ تحميل المصحف…' : 'Loading the Quran…'}</section>}>
+          <MushafPageView key={mushaf.page} page={mushaf} lang={lang} href={href} />
         </Suspense>
       )}
       {page === 'occasions' && <OccasionsPage ar={view.ar} date={view.date} />}

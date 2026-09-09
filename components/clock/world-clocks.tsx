@@ -1,4 +1,5 @@
 'use client';
+import AppLink from '@/components/layout/app-link';
 import {useNow} from '@/lib/clock-store';
 import {cities, dateInZone} from '@/lib/calendar';
 
@@ -38,7 +39,7 @@ export default function WorldClocks({
         const day =
           now === 0 ? new Date(serverDate + 'T00:00:00Z') : dateInZone(new Date(now), c.zone);
         return (
-          <a key={c.slug} href={href('prayer-times/' + c.slug)}>
+          <AppLink key={c.slug} href={href('prayer-times/' + c.slug)}>
             {ar ? c.ar : c.en}
             <b>
               {now === 0
@@ -53,7 +54,7 @@ export default function WorldClocks({
             <span className="sub">
               {formatter(locale, {day: 'numeric', month: 'short', timeZone: 'UTC'}).format(day)}
             </span>
-          </a>
+          </AppLink>
         );
       })}
     </div>

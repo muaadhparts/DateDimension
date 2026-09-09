@@ -1,4 +1,5 @@
 'use client';
+import AppLink from '@/components/layout/app-link';
 import {Clock3, Globe2} from 'lucide-react';
 import {cities} from '@/lib/calendar';
 import {NAV_ROUTES, routeFor} from '@/lib/routes';
@@ -36,11 +37,11 @@ export default function AppShell({
 
   return (
     <div lang={lang} dir={ar ? 'rtl' : 'ltr'} className="shell">
-      <a className="skip" href="#main">
+      <AppLink className="skip" href="#main">
         {t('انتقل إلى المحتوى', 'Skip to content')}
-      </a>
-      <header>
-        <a className="brand" href={href()}>
+      </AppLink>
+      <header className="site-header">
+        <AppLink className="brand" href={href()}>
           <Clock3 size={29} />
           <span>
             {t('يومك الآن', 'Your Day Now')}
@@ -48,32 +49,32 @@ export default function AppShell({
               YOUR DAY NOW
             </span>
           </span>
-        </a>
-        <nav aria-label={t('التنقل الرئيسي', 'Main navigation')}>
+        </AppLink>
+        <nav className="site-nav" aria-label={t('التنقل الرئيسي', 'Main navigation')}>
           {NAV_ROUTES.map((r) => (
-            <a
+            <AppLink
               key={r.key}
-              className={page === r.key ? 'active' : ''}
-              aria-current={page === r.key ? 'page' : undefined}
+              className={(page === r.key || (page === 'mushaf' && r.key === 'quran')) ? 'active' : ''}
+              aria-current={(page === r.key || (page === 'mushaf' && r.key === 'quran')) ? 'page' : undefined}
               href={href(r.key)}
             >
               {pick(lang, r.nav)}
-            </a>
+            </AppLink>
           ))}
         </nav>
-        <a
+        <AppLink
           className="language"
           href={`/${ar ? 'en' : 'ar'}${page ? '/' + page : ''}${named ? '/' + named.segment : ''}`}
           hrefLang={ar ? 'en' : 'ar'}
         >
           {ar ? 'English' : 'العربية'}
-        </a>
+        </AppLink>
       </header>
       <main id="main">
         {page && (
           <div className="breadcrumb">
-            <a href={href()}>{t('الرئيسية', 'Home')}</a> /{' '}
-            {named ? <a href={href(page)}>{title}</a> : title}
+            <AppLink href={href()}>{t('الرئيسية', 'Home')}</AppLink> /{' '}
+            {named ? <AppLink href={href(page)}>{title}</AppLink> : title}
             {named ? ` / ${named.name}` : ''}
           </div>
         )}
@@ -100,9 +101,9 @@ export default function AppShell({
           © {year} {t('يومك الآن · كل لحظة أوضح', 'Your Day Now · A clearer sense of time')}
         </span>
         <div>
-          <a href={href('about')}>{t('المصادر والخصوصية', 'Sources & privacy')}</a>
+          <AppLink href={href('about')}>{t('المصادر والخصوصية', 'Sources & privacy')}</AppLink>
           <span> · </span>
-          <a href={href('converter')}>{t('تحويل التاريخ', 'Date converter')}</a>
+          <AppLink href={href('converter')}>{t('تحويل التاريخ', 'Date converter')}</AppLink>
         </div>
       </footer>
     </div>

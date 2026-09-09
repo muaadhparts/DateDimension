@@ -1,4 +1,5 @@
 'use client';
+import AppLink from '@/components/layout/app-link';
 import type {DayView} from '@/lib/day';
 
 export default function AboutPage({view}: {view: DayView}) {
@@ -28,9 +29,9 @@ export default function AboutPage({view}: {view: DayView}) {
           'Times are computed in this site with the open-source adhan library, with no external service in the request path. You choose the calculation method and Asr convention; the twilight-angle rule applies at high latitudes, and Umm al-Qura uses the 120-minute Ramadan Isha interval as the Saudi timetable does. Differences from other timetables reach about four minutes, usually on Asr, because the astronomical models differ. A city outside the listed ones is geocoded once through Open-Meteo and then calculated here.',
         )}
       </p>
-      <a href="https://github.com/batoulapps/adhan-js">
+      <AppLink href="https://github.com/batoulapps/adhan-js">
         adhan-js · {t('مكتبة الحساب', 'The calculation library')}
-      </a>
+      </AppLink>
       <h2 style={{marginTop: 25}}>{t('المناسبات وصلاة العيد', 'Occasions and Eid prayer')}</h2>
       <p>
         {t(

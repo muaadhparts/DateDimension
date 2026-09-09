@@ -1,4 +1,5 @@
 'use client';
+import AppLink from '@/components/layout/app-link';
 import {CalendarDays, Copy, ArrowLeftRight, Moon, ArrowUpLeft, ArrowUpRight} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import ClockPanel from '@/components/clock/clock-panel';
@@ -129,20 +130,20 @@ export default function TodayPage({
             ],
           ] as [string, LucideIcon, string, string][]
         ).map(([p, Icon, a, b]) => (
-          <a key={p} href={href(p)}>
+          <AppLink key={p} href={href(p)}>
             <Icon size={26} />
             <div className="grow">
               <h3>{a}</h3>
               <p>{b}</p>
             </div>
             {ar ? <ArrowUpLeft size={19} /> : <ArrowUpRight size={19} />}
-          </a>
+          </AppLink>
         ))}
       </div>
       <section className="section panel">
         <div className="section-top">
           <h2>{t('هذا الشهر، بالتفصيل', 'This month, in detail')}</h2>
-          <a href={href('months')}>{t('كل أسماء الأشهر', 'All month names')} ↗</a>
+          <AppLink href={href('months')}>{t('كل أسماء الأشهر', 'All month names')} ↗</AppLink>
         </div>
         <div className="stats">
           <div className="stat">

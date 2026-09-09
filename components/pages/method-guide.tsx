@@ -18,7 +18,7 @@ export default function MethodGuide({methods, ar}: {methods: MethodSummary[]; ar
           'Dhuhr, Asr and Maghrib follow the sun’s position and barely differ between methods. The disagreement is about Fajr and Isha: when twilight is judged to begin and end. Each authority sets the angle of the sun below the horizon it accepts, which moves those two times by minutes.',
         )}
       </p>
-      <div className="table-wrap">
+      <div className="table-wrap" tabIndex={0} role="region" aria-label={t('جدول قابل للتمرير أفقيًا', 'Horizontally scrollable table')}>
         <table>
           <thead>
             <tr>
