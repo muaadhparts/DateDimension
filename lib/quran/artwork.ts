@@ -12,7 +12,11 @@ let cacheBytes = 0;
 
 /** Fixed upstream, bounded memory/response size, coalesced concurrent requests. */
 export async function getArtwork(file: string, fetcher: typeof fetch = fetch): Promise<string> {
-  if (!/^\d{3}\.svg$/.test(file) || Number(file.slice(0, 3)) < 1 || Number(file.slice(0, 3)) > 604) {
+  if (
+    !/^\d{3}\.svg$/.test(file) ||
+    Number(file.slice(0, 3)) < 1 ||
+    Number(file.slice(0, 3)) > 604
+  ) {
     throw new RangeError('Invalid mushaf page');
   }
   const cached = cache.get(file);
@@ -42,7 +46,11 @@ export async function getArtwork(file: string, fetcher: typeof fetch = fetch): P
     } finally {
       await reader.cancel();
     }
-    if (!/<svg\s/.test(svg) || !/viewBox=["'][^"']+["']/.test(svg) || !svg.trimEnd().endsWith('</svg>')) {
+    if (
+      !/<svg\s/.test(svg) ||
+      !/viewBox=["'][^"']+["']/.test(svg) ||
+      !svg.trimEnd().endsWith('</svg>')
+    ) {
       throw new Error('Invalid mushaf artwork');
     }
     // SVG is served only as an image, never inserted as HTML. Reject active content too.
@@ -59,5 +67,9 @@ export async function getArtwork(file: string, fetcher: typeof fetch = fetch): P
     return svg;
   })();
   pending.set(file, task);
-  try { return await task; } finally { pending.delete(file); }
+  try {
+    return await task;
+  } finally {
+    pending.delete(file);
+  }
 }

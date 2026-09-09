@@ -41,30 +41,32 @@ export default function MushafPageView({
         </p>
         <QuranArtwork key={page.page} page={page.page} ar={ar} />
         <details className="quran-text">
-          <summary>{t('النص القرآني للقراءة والنسخ', 'Quran text for reading and copying')}</summary>
-        <div lang="ar" dir="rtl">
-          {page.blocks.map((block) => (
-            <div key={`${block.surah}-${block.verses[0].number}`}>
-              {block.basmala && (
-                <>
-                  <p className="mushaf-surah-head">{bareName(block)}</p>
-                  <p className="basmala">{BASMALA}</p>
-                </>
-              )}
-              <p className="verses">
-                {block.verses.map((verse) => (
-                  <span key={verse.number} className="verse">
-                    {verse.text}
-                    <span className="verse-number" aria-label={`آية ${verse.number}`}>
-                      {'۝'}
-                      {verse.number.toLocaleString('ar-EG')}
-                    </span>{' '}
-                  </span>
-                ))}
-              </p>
-            </div>
-          ))}
-        </div>
+          <summary>
+            {t('النص القرآني للقراءة والنسخ', 'Quran text for reading and copying')}
+          </summary>
+          <div lang="ar" dir="rtl">
+            {page.blocks.map((block) => (
+              <div key={`${block.surah}-${block.verses[0].number}`}>
+                {block.basmala && (
+                  <>
+                    <p className="mushaf-surah-head">{bareName(block)}</p>
+                    <p className="basmala">{BASMALA}</p>
+                  </>
+                )}
+                <p className="verses">
+                  {block.verses.map((verse) => (
+                    <span key={verse.number} className="verse">
+                      {verse.text}
+                      <span className="verse-number" aria-label={`آية ${verse.number}`}>
+                        {'۝'}
+                        {verse.number.toLocaleString('ar-EG')}
+                      </span>{' '}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            ))}
+          </div>
         </details>
         <p className="mushaf-page-number" lang="ar">
           {page.page.toLocaleString('ar-EG')}

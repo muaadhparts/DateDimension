@@ -300,7 +300,7 @@ export default async function Page({params}: {params: Promise<Params>}) {
         dangerouslySetInnerHTML={{__html: JSON.stringify(structured).replace(/</g, '\\u003c')}}
       />
       <DateApp
-        key={`${p.lang}/${page}/${city?.slug ?? surah?.number ?? mushaf?.page ?? ""}`}
+        key={`${p.lang}/${page}/${city?.slug ?? surah?.number ?? mushaf?.page ?? ''}`}
         lang={p.lang as Lang}
         page={page}
         initialDate={dateInZone(now, zone).toISOString().slice(0, 10)}

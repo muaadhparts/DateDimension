@@ -112,7 +112,13 @@ export default function DateApp({
         />
       )}
       {page === 'quran' && (
-        <Suspense fallback={<section className="panel empty" role="status" aria-busy="true">{view.ar ? 'جارٍ تحميل المصحف…' : 'Loading the Quran…'}</section>}>
+        <Suspense
+          fallback={
+            <section className="panel empty" role="status" aria-busy="true">
+              {view.ar ? 'جارٍ تحميل المصحف…' : 'Loading the Quran…'}
+            </section>
+          }
+        >
           {surah ? (
             <SurahPage key={surah.number} surah={surah} lang={lang} href={href} />
           ) : (
@@ -121,7 +127,13 @@ export default function DateApp({
         </Suspense>
       )}
       {page === 'mushaf' && mushaf && (
-        <Suspense fallback={<section className="panel empty" role="status" aria-busy="true">{view.ar ? 'جارٍ تحميل المصحف…' : 'Loading the Quran…'}</section>}>
+        <Suspense
+          fallback={
+            <section className="panel empty" role="status" aria-busy="true">
+              {view.ar ? 'جارٍ تحميل المصحف…' : 'Loading the Quran…'}
+            </section>
+          }
+        >
           <MushafPageView key={mushaf.page} page={mushaf} lang={lang} href={href} />
         </Suspense>
       )}

@@ -54,8 +54,10 @@ export default function AppShell({
           {NAV_ROUTES.map((r) => (
             <AppLink
               key={r.key}
-              className={(page === r.key || (page === 'mushaf' && r.key === 'quran')) ? 'active' : ''}
-              aria-current={(page === r.key || (page === 'mushaf' && r.key === 'quran')) ? 'page' : undefined}
+              className={page === r.key || (page === 'mushaf' && r.key === 'quran') ? 'active' : ''}
+              aria-current={
+                page === r.key || (page === 'mushaf' && r.key === 'quran') ? 'page' : undefined
+              }
               href={href(r.key)}
             >
               {pick(lang, r.nav)}

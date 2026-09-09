@@ -1,6 +1,7 @@
 'use client';
 import AppLink from '@/components/layout/app-link';
 import type {DayView} from '@/lib/day';
+import {ARTWORK_SOURCE} from '@/lib/quran/artwork';
 
 export default function AboutPage({view}: {view: DayView}) {
   const {ar} = view;
@@ -38,6 +39,17 @@ export default function AboutPage({view}: {view: DayView}) {
           'المناسبات المعروضة تواريخ تقويمية وليست تأكيداً لعطلة رسمية. يوم العيد ووقت صلاته يحددهما الإعلان المحلي؛ لا ننشر وقتاً تقديرياً على أنه موعد مسجد معتمد.',
           'Occasion dates are calendar estimates, not confirmation of public holidays. Local authorities determine Eid dates and prayer schedules. We do not present an estimate as an official mosque time.',
         )}
+      </p>
+      <h2>{t('القرآن الكريم', 'The Quran')}</h2>
+      <p>
+        {t(
+          'النص القرآني بالرسم العثماني من مشروع تنزيل، محفوظ محليًا دون تعديل. صور صفحات مصحف المدينة برواية حفص من مصحف مجمع الملك فهد عبر Quranpedia، وتحافظ على السطور عند تغيير حجم الشاشة. تُحمّل الصور عبر خادم الموقع؛ إذا تعذّر تحميلها يبقى النص متاحًا للقراءة والنسخ.',
+          'Unmodified Tanzil Uthmani text is stored locally. Hafs Madinah mushaf page artwork from the King Fahd Complex via Quranpedia preserves printed lines across screen sizes. Images load through this site’s server; if unavailable, the text remains available for reading and copying.',
+        )}
+      </p>
+      <p>
+        <AppLink href="https://tanzil.net/docs/Text_License">Tanzil</AppLink> ·{' '}
+        <AppLink href={ARTWORK_SOURCE}>Quranpedia</AppLink>
       </p>
       <h2>{t('أين أنت', 'Where you are')}</h2>
       <p>

@@ -101,7 +101,9 @@ export default function SurahPage({
       </section>
 
       <div ref={reader} className="quran-reader" tabIndex={-1}>
-        <p className="sr-only" role="status">{t(`صفحة ${spreads[current].page} من المصحف`, `Mushaf page ${spreads[current].page}`)}</p>
+        <p className="sr-only" role="status">
+          {t(`صفحة ${spreads[current].page} من المصحف`, `Mushaf page ${spreads[current].page}`)}
+        </p>
         {spreads.map((spread, index) => (
           <section
             key={spread.page}
@@ -115,26 +117,28 @@ export default function SurahPage({
             </p>
             {index === current && <QuranArtwork key={spread.page} page={spread.page} ar={ar} />}
             <details className="quran-text">
-              <summary>{t('نص آيات السورة في هذه الصفحة', 'This surah’s verses on this page')}</summary>
-            <div lang="ar" dir="rtl">
-              {index === 0 && surah.basmala && (
-                <>
-                  <p className="mushaf-surah-head">{bareName(surah)}</p>
-                  <p className="basmala">{BASMALA}</p>
-                </>
-              )}
-              <p className="verses">
-                {spread.verses.map((verse) => (
-                  <span key={verse.number} id={`v${verse.number}`} className="verse">
-                    {verse.text}
-                    <span className="verse-number" aria-label={`آية ${verse.number}`}>
-                      {'۝'}
-                      {verse.number.toLocaleString('ar-EG')}
-                    </span>{' '}
-                  </span>
-                ))}
-              </p>
-            </div>
+              <summary>
+                {t('نص آيات السورة في هذه الصفحة', 'This surah’s verses on this page')}
+              </summary>
+              <div lang="ar" dir="rtl">
+                {index === 0 && surah.basmala && (
+                  <>
+                    <p className="mushaf-surah-head">{bareName(surah)}</p>
+                    <p className="basmala">{BASMALA}</p>
+                  </>
+                )}
+                <p className="verses">
+                  {spread.verses.map((verse) => (
+                    <span key={verse.number} id={`v${verse.number}`} className="verse">
+                      {verse.text}
+                      <span className="verse-number" aria-label={`آية ${verse.number}`}>
+                        {'۝'}
+                        {verse.number.toLocaleString('ar-EG')}
+                      </span>{' '}
+                    </span>
+                  ))}
+                </p>
+              </div>
             </details>
             <p className="mushaf-page-number" lang="ar">
               {spread.page.toLocaleString('ar-EG')}

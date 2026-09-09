@@ -31,13 +31,7 @@ jobs:
           key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-${{ runner.os }}-
       - run: npm ci --no-audit --no-fund
-      - name: Verify formatting
-        run: |
-          if ! npm run format:check; then
-            npm run format
-            git diff
-            exit 1
-          fi
+      - run: npm run format:check
       - run: npm run typecheck
       - run: npm run test:unit
       - run: npm run lint

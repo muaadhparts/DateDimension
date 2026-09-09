@@ -69,3 +69,4 @@ select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px 
   .reader-tools{gap:8px}.reader-tools .btn{padding:8px 10px}
 }
 @media(prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none!important}}
+@media(max-width:380px){.prayers{grid-template-columns:repeat(2,minmax(0,1fr))}.reader-tools>span{font-size:12px}}
