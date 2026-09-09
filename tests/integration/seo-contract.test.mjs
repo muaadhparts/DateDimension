@@ -19,6 +19,28 @@ const request = (path, headers = {accept: 'text/html'}) =>
   );
 const html = async (path) => (await request(path)).text();
 
+test('Mushaf image routes preserve SVG, cache successes and expose retryable failures', async () => {
+  assert.equal((await request('/api/mushaf/000.svg')).status, 404);
+  assert.equal((await request('/api/mushaf/605.svg')).status, 404);
+  const realFetch = globalThis.fetch;
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 345 550"></svg>';
+  try {
+    globalThis.fetch = async () => new Response(svg);
+    const image = await request('/api/mushaf/604.svg');
+    assert.equal(image.status, 200);
+    assert.equal(await image.text(), svg);
+    assert.match(image.headers.get('content-type'), /image\/svg\+xml/);
+    assert.match(image.headers.get('cache-control'), /public/);
+    assert.equal(image.headers.get('x-robots-tag'), 'noindex');
+    globalThis.fetch = async () => new Response('', {status: 503});
+    const failed = await request('/api/mushaf/603.svg');
+    assert.equal(failed.status, 503);
+    assert.equal(failed.headers.get('cache-control'), 'no-store');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});
+
 test('Canonical, hreflang and x-default carry the real origin and point at each other', async () => {
   for (const [path, other] of [
     ['/ar', '/en'],
