@@ -64,7 +64,12 @@ export default function PrayerTimetable({
           'The whole month, calculated with the method and school selected above. Times are in the city’s own zone.',
         )}
       </p>
-      <div className="table-wrap">
+      <div
+        className="table-wrap"
+        tabIndex={0}
+        role="region"
+        aria-label={t('جدول قابل للتمرير أفقيًا', 'Horizontally scrollable table')}
+      >
         <table>
           <thead>
             <tr>

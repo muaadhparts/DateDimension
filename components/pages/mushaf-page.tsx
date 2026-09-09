@@ -1,4 +1,7 @@
 'use client';
+import AppLink from '@/components/layout/app-link';
+import {useRouter} from 'next/navigation';
+import QuranArtwork from '@/components/quran-artwork';
 import {useState} from 'react';
 import {ArrowLeft, ArrowRight} from 'lucide-react';
 import {BASMALA, bareName} from '@/lib/quran/text';
@@ -20,6 +23,7 @@ export default function MushafPageView({
   lang: Lang;
   href: (path?: string) => string;
 }) {
+  const router = useRouter();
   const ar = lang === 'ar';
   const t = (a: string, b: string) => (ar ? a : b);
   const Back = ar ? ArrowRight : ArrowLeft;
@@ -35,29 +39,35 @@ export default function MushafPageView({
           </span>
           <span className="sub">{t(`الجزء ${page.juz}`, `Juz ${page.juz}`)}</span>
         </p>
-        <div lang="ar" dir="rtl">
-          {page.blocks.map((block) => (
-            <div key={`${block.surah}-${block.verses[0].number}`}>
-              {block.basmala && (
-                <>
-                  <p className="mushaf-surah-head">{bareName(block)}</p>
-                  <p className="basmala">{BASMALA}</p>
-                </>
-              )}
-              <p className="verses">
-                {block.verses.map((verse) => (
-                  <span key={verse.number} className="verse">
-                    {verse.text}
-                    <span className="verse-number" aria-label={`آية ${verse.number}`}>
-                      {'۝'}
-                      {verse.number.toLocaleString('ar-EG')}
-                    </span>{' '}
-                  </span>
-                ))}
-              </p>
-            </div>
-          ))}
-        </div>
+        <QuranArtwork key={page.page} page={page.page} ar={ar} />
+        <details className="quran-text">
+          <summary>
+            {t('النص القرآني للقراءة والنسخ', 'Quran text for reading and copying')}
+          </summary>
+          <div lang="ar" dir="rtl">
+            {page.blocks.map((block) => (
+              <div key={`${block.surah}-${block.verses[0].number}`}>
+                {block.basmala && (
+                  <>
+                    <p className="mushaf-surah-head">{bareName(block)}</p>
+                    <p className="basmala">{BASMALA}</p>
+                  </>
+                )}
+                <p className="verses">
+                  {block.verses.map((verse) => (
+                    <span key={verse.number} className="verse">
+                      {verse.text}
+                      <span className="verse-number" aria-label={`آية ${verse.number}`}>
+                        {'۝'}
+                        {verse.number.toLocaleString('ar-EG')}
+                      </span>{' '}
+                    </span>
+                  ))}
+                </p>
+              </div>
+            ))}
+          </div>
+        </details>
         <p className="mushaf-page-number" lang="ar">
           {page.page.toLocaleString('ar-EG')}
         </p>
@@ -65,21 +75,21 @@ export default function MushafPageView({
 
       <nav className="page-nav" aria-label={t('التنقل بين صفحات المصحف', 'Mushaf page navigation')}>
         {page.page > 1 ? (
-          <a href={href(`mushaf/${page.page - 1}`)} rel="prev">
+          <AppLink href={href(`mushaf/${page.page - 1}`)} rel="prev">
             <Back size={18} aria-hidden="true" />
             {t(`الصفحة ${page.page - 1}`, `Page ${page.page - 1}`)}
-          </a>
+          </AppLink>
         ) : (
           <span />
         )}
-        <a className="tag" href={href('quran')}>
+        <AppLink className="tag" href={href('quran')}>
           {t('فهرس السور', 'Surah index')}
-        </a>
+        </AppLink>
         {page.page < TOTAL ? (
-          <a href={href(`mushaf/${page.page + 1}`)} rel="next">
+          <AppLink href={href(`mushaf/${page.page + 1}`)} rel="next">
             {t(`الصفحة ${page.page + 1}`, `Page ${page.page + 1}`)}
             <Forward size={18} aria-hidden="true" />
-          </a>
+          </AppLink>
         ) : (
           <span />
         )}
@@ -91,7 +101,7 @@ export default function MushafPageView({
           event.preventDefault();
           const wanted = Number(jump);
           if (Number.isInteger(wanted) && wanted >= 1 && wanted <= TOTAL) {
-            window.location.href = href(`mushaf/${wanted}`);
+            router.push(href(`mushaf/${wanted}`));
           }
         }}
       >
@@ -104,6 +114,7 @@ export default function MushafPageView({
           value={jump}
           onChange={(event) => setJump(event.target.value)}
           inputMode="numeric"
+          required
         />
         <button className="btn secondary">{t('انتقل', 'Go')}</button>
         <span className="sub">{t(`من ${TOTAL} صفحة`, `of ${TOTAL} pages`)}</span>

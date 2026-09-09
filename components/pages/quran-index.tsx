@@ -1,4 +1,5 @@
 'use client';
+import AppLink from '@/components/layout/app-link';
 import {useMemo, useState} from 'react';
 import {Search} from 'lucide-react';
 import {SEARCHABLE, TOTAL_VERSES} from '@/lib/quran';
@@ -58,9 +59,9 @@ export default function QuranIndex({lang, href}: {lang: Lang; href: (path?: stri
           )}
         </p>
         <p className="note">
-          <a href={href('mushaf/1')}>
+          <AppLink href={href('mushaf/1')}>
             {t('أو تصفّح المصحف صفحة بصفحة', 'Or read the mushaf page by page')}
-          </a>
+          </AppLink>
         </p>
       </section>
 
@@ -71,7 +72,7 @@ export default function QuranIndex({lang, href}: {lang: Lang; href: (path?: stri
       ) : (
         <div className="surah-grid" aria-live="polite">
           {matches.map((surah) => (
-            <a key={surah.number} className="surah-card" href={href(`quran/${surah.number}`)}>
+            <AppLink key={surah.number} className="surah-card" href={href(`quran/${surah.number}`)}>
               <span className="surah-number" aria-hidden="true">
                 {surah.number}
               </span>
@@ -85,7 +86,7 @@ export default function QuranIndex({lang, href}: {lang: Lang; href: (path?: stri
                   {surah.revelationType === 'Meccan' ? t('مكية', 'Meccan') : t('مدنية', 'Medinan')}
                 </span>
               </span>
-            </a>
+            </AppLink>
           ))}
         </div>
       )}

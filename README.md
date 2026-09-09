@@ -9,7 +9,7 @@ Bilingual Arabic/English date and time information site. Responsive RTL/LTR inte
 - Gregorian month names in common Arabic, Levantine/Iraqi and Maghreb variants, plus English. Hijri names are deliberately separate: Muharram is not January.
 - Worldwide prayer search by full city/country or consented geolocation, date, method and Asr convention. Eight curated city routes offer direct search landing pages without mass-generated doorway pages.
 - Upcoming Islamic calendar occasions with explicit local-observation limitations. Eid prayer is never fabricated from sunrise.
-- The Quran in the Uthmani script, served from this repository: 114 surahs searchable by Arabic or English name or by number, and the mushaf itself at `/{lang}/mushaf/{1-604}`, each page carrying exactly the verses printed on that page of the Madani edition. The text is Tanzil's, reproduced unmodified and attributed; the only separation made is printing the Basmala above a surah, as every mushaf does. Set in Amiri Quran, self-hosted because the CSP allows fonts from this origin only.
+- The Quran in the Uthmani script, served from this repository: 114 surahs searchable by Arabic or English name or by number, and the mushaf itself at `/{lang}/mushaf/{1-604}`, each page carrying exactly the verses printed on that page of the Madani edition. The text is Tanzil's, reproduced unmodified and attributed; the only separation made is printing the Basmala above a surah, as every mushaf does. The default reader displays fixed Hafs/KFQC vector pages via a bounded same-origin endpoint, preserving printed line breaks on small screens. Expandable local text uses the self-hosted Amiri Quran font. See [artwork sources and operations](MUSHAF-ARTWORK.md).
 - Unique server-rendered metadata, canonical URLs, reciprocal hreflang, sitemap, robots, WebSite/WebPage/BreadcrumbList JSON-LD, valid 404s and root redirect.
 
 ## Run
@@ -32,7 +32,7 @@ Nothing about the visitor may reach the HTML: one cached copy is served to every
 
 ## Caching
 
-Pages are cached by Cloudflare using the `s-maxage` the application computes: a copy stays valid until midnight in the zone the page is about, capped at an hour so a deployment lands. Pages with no date in them at all — the Quran, the mushaf, about — are capped the same way for the same reason. Everything time-dependent, the clock and the world clocks, is rendered in the browser, so nothing in the HTML goes stale before then. RSC navigations and `/api/` are never cached.
+Pages are cached by Cloudflare using the `s-maxage` the application computes: a copy stays valid until midnight in the zone the page is about, capped at an hour so a deployment lands. Pages with no date in them at all — the Quran, the mushaf, about — are capped the same way for the same reason. Everything time-dependent, the clock and the world clocks, is rendered in the browser, so nothing in the HTML goes stale before then. RSC navigations and dynamic API data are never cached. The pinned mushaf SVG endpoint has its own public image cache headers.
 
 The worker's own `caches.default` key carries the build id, so a deployment orphans every copy it stored instead of waiting for it to expire. Purging through the Cloudflare API would need a Cache Purge permission this account's tokens do not have.
 

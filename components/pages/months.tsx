@@ -16,7 +16,12 @@ export default function MonthsPage({view}: {view: DayView}) {
             'Common names across the Arab world. Spellings vary between countries.',
           )}
         </p>
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label={t('جدول قابل للتمرير أفقيًا', 'Horizontally scrollable table')}
+        >
           <table>
             <thead>
               <tr>
@@ -55,7 +60,12 @@ export default function MonthsPage({view}: {view: DayView}) {
             'Hijri months are independent of Gregorian months and contain 29 or 30 days.',
           )}
         </p>
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label={t('جدول قابل للتمرير أفقيًا', 'Horizontally scrollable table')}
+        >
           <table>
             <thead>
               <tr>

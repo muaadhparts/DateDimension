@@ -1,4 +1,5 @@
 'use client';
+import AppLink from '@/components/layout/app-link';
 import {useEffect, useRef, useState} from 'react';
 import {Moon, Sun, Sunrise, Sunset, LocateFixed} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
@@ -365,9 +366,9 @@ export default function Prayers({
       )}
       <div className="city-links">
         {cities.map((c) => (
-          <a key={c.slug} href={`/${lang}/prayer-times/${c.slug}`}>
+          <AppLink key={c.slug} href={`/${lang}/prayer-times/${c.slug}`}>
             {ar ? c.ar : c.en}
-          </a>
+          </AppLink>
         ))}
       </div>
       <MethodGuide methods={methodDetails} ar={ar} />
@@ -381,9 +382,9 @@ export default function Prayers({
             'There is no single official time for every city or country. Mosques and local authorities announce Eid prayer schedules. The sunrise time above is not an Eid prayer time. Check your mosque or religious authority after the Eid date is confirmed.',
           )}
         </p>
-        <a className="tag" href={`/${lang}/occasions`}>
+        <AppLink className="tag" href={`/${lang}/occasions`}>
           {t('تواريخ الأعياد القادمة', 'Upcoming Eid dates')} ↗
-        </a>
+        </AppLink>
       </section>
     </>
   );

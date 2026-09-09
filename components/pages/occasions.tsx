@@ -89,7 +89,12 @@ export default function Occasions({ar, date}: {ar: boolean; date: Date}) {
             'Calculated with Umm al-Qura. Many countries announce the month by sighting, so a date can move by a day either way.',
           )}
         </p>
-        <div className="table-wrap">
+        <div
+          className="table-wrap"
+          tabIndex={0}
+          role="region"
+          aria-label={t('جدول قابل للتمرير أفقيًا', 'Horizontally scrollable table')}
+        >
           <table>
             <thead>
               <tr>
