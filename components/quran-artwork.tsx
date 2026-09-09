@@ -1,7 +1,6 @@
 'use client';
-import AppLink from '@/components/layout/app-link';
 import {useCallback, useState} from 'react';
-import {ARTWORK_SOURCE, artworkUrl} from '@/lib/quran/artwork';
+import {artworkUrl} from '@/lib/quran/artwork';
 
 /** Scale the original printed page as a unit; never reflow or clip its lines. */
 export default function QuranArtwork({page, ar}: {page: number; ar: boolean}) {
@@ -83,14 +82,6 @@ export default function QuranArtwork({page, ar}: {page: number; ar: boolean}) {
           )}
         </p>
       )}
-      <p className="artwork-credit">
-        <AppLink href={ARTWORK_SOURCE} target="_blank" rel="noreferrer">
-          {t(
-            'صور مصحف مجمع الملك فهد عبر Quranpedia',
-            'King Fahd Complex mushaf artwork via Quranpedia',
-          )}
-        </AppLink>
-      </p>
     </div>
   );
 }

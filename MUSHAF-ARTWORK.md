@@ -7,7 +7,7 @@ by [Quranpedia](https://github.com/quranpedia/quran-svg), pinned to revision
 Artwork belongs to the King Fahd Glorious Quran Printing Complex. Quranpedia's
 [NOTICE](https://github.com/quranpedia/quran-svg/blob/b91d39e1065b57bdda3e94aca8ecf3575e50e1e6/NOTICE.md)
 documents the artwork terms separately from its CC0 metadata. The attribution
-appears under each image and on the sources page.
+appears on the sources page. The reader has no external link beneath its image.
 
 - `/api/mushaf/001.svg` through `/api/mushaf/604.svg` fetch only the pinned files
   on `raw.githubusercontent.com`. Forge needs outbound HTTPS to that host.

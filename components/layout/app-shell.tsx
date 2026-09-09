@@ -36,7 +36,12 @@ export default function AppShell({
   const title = route ? pick(lang, route.title) : '';
 
   return (
-    <div lang={lang} dir={ar ? 'rtl' : 'ltr'} className="shell">
+    <div
+      lang={lang}
+      dir={ar ? 'rtl' : 'ltr'}
+      className="shell"
+      data-reader={page === 'mushaf' || (page === 'quran' && !!subject)}
+    >
       <AppLink className="skip" href="#main">
         {t('انتقل إلى المحتوى', 'Skip to content')}
       </AppLink>

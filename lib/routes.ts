@@ -157,4 +157,5 @@ const byKey = new Map(ROUTES.map((route) => [route.key as string, route]));
 
 export const routeFor = (key: string): RouteContent | undefined => byKey.get(key);
 /** Pages shown in the header navigation, in order. */
-export const NAV_ROUTES = ROUTES.filter((route) => route.inNav !== false && route.key !== 'about');
+const NAV_ORDER = ['', 'quran', 'prayer-times', 'months', 'occasions'] as const;
+export const NAV_ROUTES = NAV_ORDER.map((key) => byKey.get(key)!);

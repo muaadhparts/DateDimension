@@ -65,7 +65,7 @@ export default function SurahPage({
 
   return (
     <>
-      <section className="panel">
+      <section className="panel surah-overview">
         <div className="stats">
           <div className="stat">
             <span className="sub">{t('رقم السورة', 'Surah number')}</span>
