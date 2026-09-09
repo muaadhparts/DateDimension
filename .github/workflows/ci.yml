@@ -30,6 +30,11 @@ jobs:
           path: .sites-runtime/npm-cache
           key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-${{ runner.os }}-
+      - name: Prepare patched Next.js lockfile
+        run: |
+          npm install --package-lock-only --ignore-scripts --save-exact next@16.3.3 --no-audit --no-fund
+          git diff -- package.json package-lock.json
+          exit 1
       - run: npm ci --no-audit --no-fund
       - run: npm run format:check
       - run: npm run typecheck
