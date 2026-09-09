@@ -31,7 +31,7 @@ select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px 
 .reader-tools .btn{font-size:13px;padding:8px 14px;min-height:44px}
 .artwork-scroll{position:relative;overflow-x:auto;max-width:100%;background:#faf5e6;border-radius:12px;overscroll-behavior-inline:contain;direction:rtl;color-scheme:light}
 .artwork-scroll img{display:block;width:100%;height:auto;max-width:none;aspect-ratio:345/550}
-.artwork-scroll.is-enlarged img{width:max(100%,690px)}
+.artwork-scroll.is-enlarged img{width:max(150%,690px)}
 .artwork-loading{position:absolute;inset:0;display:grid;place-content:center;color:#253529;font-size:14px;pointer-events:none}
 .artwork-scroll:not([aria-busy=true]) .artwork-loading{display:none}
 .artwork-credit{font-size:11px;text-align:center;margin:10px 0;color:#a9bbac}
