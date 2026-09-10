@@ -1,6 +1,14 @@
 'use client';
 import AppLink from '@/components/layout/app-link';
-import {Calculator, Copy, ArrowLeftRight, Moon, ArrowUpLeft, ArrowUpRight} from 'lucide-react';
+import {
+  Calculator,
+  CalendarDays,
+  Copy,
+  ArrowLeftRight,
+  Moon,
+  ArrowUpLeft,
+  ArrowUpRight,
+} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import ClockPanel from '@/components/clock/clock-panel';
 import WorldClocks from '@/components/clock/world-clocks';

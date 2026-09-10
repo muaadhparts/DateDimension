@@ -100,7 +100,17 @@ export default function DateApp({
           href={href}
         />
       )}
-      {page === 'business-calculator' && <Suspense fallback={<div className="panel" role="status">{view.ar ? 'جارٍ تحميل الحاسبة…' : 'Loading calculator…'}</div>}><BusinessPage ar={view.ar} /></Suspense>}
+      {page === 'business-calculator' && (
+        <Suspense
+          fallback={
+            <div className="panel" role="status">
+              {view.ar ? 'جارٍ تحميل الحاسبة…' : 'Loading calculator…'}
+            </div>
+          }
+        >
+          <BusinessPage ar={view.ar} />
+        </Suspense>
+      )}
       {page === 'converter' && <ConverterPage ar={view.ar} date={view.date} />}
       {page === 'prayer-times' && (
         <PrayersPage
