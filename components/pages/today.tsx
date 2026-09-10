@@ -1,6 +1,6 @@
 'use client';
 import AppLink from '@/components/layout/app-link';
-import {CalendarDays, Copy, ArrowLeftRight, Moon, ArrowUpLeft, ArrowUpRight} from 'lucide-react';
+import {Calculator, Copy, ArrowLeftRight, Moon, ArrowUpLeft, ArrowUpRight} from 'lucide-react';
 import type {LucideIcon} from 'lucide-react';
 import ClockPanel from '@/components/clock/clock-panel';
 import WorldClocks from '@/components/clock/world-clocks';
@@ -123,10 +123,10 @@ export default function TodayPage({
               t('مواقيت مدينتك اليوم', 'Today’s times in your city'),
             ],
             [
-              'occasions',
-              CalendarDays,
-              t('المناسبات القادمة', 'Upcoming occasions'),
-              t('رمضان والأعياد والمزيد', 'Ramadan, Eid and more'),
+              'business-calculator',
+              Calculator,
+              t('حاسبة الأعمال', 'Business calculator'),
+              t('ضريبة، خصم، نسب وربح', 'Tax, discounts, percentages & profit'),
             ],
           ] as [string, LucideIcon, string, string][]
         ).map(([p, Icon, a, b]) => (

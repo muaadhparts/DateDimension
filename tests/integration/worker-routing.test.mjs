@@ -33,7 +33,7 @@ test('Arabic and English content, direction, canonical, hreflang and structured 
   }
 });
 test('Task pages render useful content before JavaScript', async () => {
-  for (const page of ['converter', 'months', 'occasions', 'about']) {
+  for (const page of ['converter', 'months', 'occasions', 'about', 'business-calculator']) {
     const r = await request('/en/' + page);
     assert.equal(r.status, 200);
     const html = await r.text();

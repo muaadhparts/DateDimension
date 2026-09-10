@@ -46,6 +46,7 @@ test('Canonical, hreflang and x-default carry the real origin and point at each 
     ['/ar', '/en'],
     ['/en', '/ar'],
     ['/ar/converter', '/en/converter'],
+    ['/ar/business-calculator', '/en/business-calculator'],
     ['/en/prayer-times/london', '/ar/prayer-times/london'],
   ]) {
     const body = await html(path);

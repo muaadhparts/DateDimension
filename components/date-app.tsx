@@ -8,6 +8,7 @@ import OccasionsPage from '@/components/pages/occasions';
 import MonthsPage from '@/components/pages/months';
 import {lazy, Suspense} from 'react';
 // The surah list is 114 rows of metadata; only the Quran pages should carry it.
+const BusinessPage = lazy(() => import('@/components/pages/business'));
 const QuranIndex = lazy(() => import('@/components/pages/quran-index'));
 const SurahPage = lazy(() => import('@/components/pages/surah-page'));
 const MushafPageView = lazy(() => import('@/components/pages/mushaf-page'));
@@ -99,6 +100,7 @@ export default function DateApp({
           href={href}
         />
       )}
+      {page === 'business-calculator' && <Suspense fallback={<div className="panel" role="status">{view.ar ? 'جارٍ تحميل الحاسبة…' : 'Loading calculator…'}</div>}><BusinessPage ar={view.ar} /></Suspense>}
       {page === 'converter' && <ConverterPage ar={view.ar} date={view.date} />}
       {page === 'prayer-times' && (
         <PrayersPage

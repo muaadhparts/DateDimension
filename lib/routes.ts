@@ -1,7 +1,7 @@
 import type {Bi} from './i18n.ts';
 
 export type RouteKey =
-  '' | 'converter' | 'prayer-times' | 'quran' | 'mushaf' | 'occasions' | 'months' | 'about';
+  '' | 'converter' | 'prayer-times' | 'quran' | 'mushaf' | 'occasions' | 'months' | 'about' | 'business-calculator';
 
 export type RouteContent = {
   key: RouteKey;
@@ -139,6 +139,15 @@ export const ROUTES: readonly RouteContent[] = [
     hasCityPages: false,
   },
   {
+    key: 'business-calculator',
+    nav: ['حاسبة الأعمال', 'Business calculator'],
+    title: ['حاسبة الأعمال', 'Business calculator'],
+    metaTitle: ['حاسبة الضريبة والخصم والنسب والربح', 'Tax, discount, percentage and profit calculator'],
+    description: ['حاسبة أعمال مجانية لإضافة الضريبة وإزالتها وحساب الخصم والزيادة والسعر الأصلي ونسبة التغير وهامش الربح، مع آلة حاسبة ونتائج فورية.', 'Free business tools to add or remove tax, calculate discounts, increases, original prices, percentage changes and profit margins, with an everyday calculator.'],
+    intro: ['من المبلغ إلى النتيجة. ضريبة، خصم، نسب وربح في مكان واحد.', 'From amount to answer. Tax, discounts, percentages and profit in one place.'],
+    hasCityPages: false,
+  },
+  {
     key: 'about',
     nav: ['عن الموقع', 'About'],
     title: ['المصادر ومنهجية الحساب', 'Sources & calculation methods'],
@@ -157,5 +166,5 @@ const byKey = new Map(ROUTES.map((route) => [route.key as string, route]));
 
 export const routeFor = (key: string): RouteContent | undefined => byKey.get(key);
 /** Pages shown in the header navigation, in order. */
-const NAV_ORDER = ['', 'quran', 'prayer-times', 'months', 'occasions'] as const;
+const NAV_ORDER = ['', 'quran', 'prayer-times', 'months', 'occasions', 'business-calculator'] as const;
 export const NAV_ROUTES = NAV_ORDER.map((key) => byKey.get(key)!);
