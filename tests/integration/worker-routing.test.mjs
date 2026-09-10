@@ -46,7 +46,7 @@ test('Sitemap is finite, API inputs are validated and private preview cannot be 
   const sitemap = await request('/sitemap.xml');
   assert.equal(sitemap.status, 200);
   const xml = await sitemap.text();
-  assert.equal((xml.match(/<loc>/g) || []).length, 1466);
+  assert.equal((xml.match(/<loc>/g) || []).length, 1468);
   const robots = await request('/robots.txt');
   assert.equal(robots.status, 200);
   assert.match(await robots.text(), /Disallow: \//);
