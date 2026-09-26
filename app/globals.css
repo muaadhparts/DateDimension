@@ -142,3 +142,21 @@ select:focus-visible,summary:focus-visible,[tabindex]:focus-visible{outline:2px 
 
 .business-mobile-tools{display:none}
 @media(max-width:700px){.business-tools{display:none}.business-mobile-tools{display:flex;flex-direction:column;gap:6px;margin-bottom:12px;font-size:14px}.business-mobile-tools select{font:inherit;font-size:16px}.business-output-heading,.business-breakdown>div{font-size:14px}}
+/* National address */
+.naddr{display:grid;gap:20px}
+.naddr-code-row{display:flex;gap:10px;margin-top:10px}.naddr-code-row input{flex:1;font-size:20px;letter-spacing:3px;text-transform:uppercase;font-family:monospace}.naddr-code-row .btn{flex-shrink:0}
+.naddr-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.naddr-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}
+.naddr-map-panel .section-top{margin-bottom:4px}.naddr-map-panel .btn{min-height:44px;padding:8px 16px;font-size:14px}
+.naddr-map-wrap{position:relative;height:440px;margin-top:14px;border-radius:14px;overflow:hidden;background:#0c1b16;border:1px solid #ffffff14}.naddr-map{position:absolute;inset:0;color-scheme:light}
+.naddr-map-state{position:absolute;inset:0;background:#0c1b16;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:#a9bbac;font-size:14px;color-scheme:dark}
+.naddr-note{font-size:14px;margin:12px 0 0;color:#c7d8c0}.naddr-note.is-ok{color:#c6ed98}.naddr-note.is-warn{color:#f3d58a}.naddr-note.is-error{color:#ffbba9}
+.naddr-result{background:radial-gradient(ellipse at 0 0,#263e2c88,transparent 65%),#11231e;border-color:#9dc07840;scroll-margin-top:20px}
+.naddr-result-top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.naddr-short{display:block;font-size:clamp(32px,5vw,48px);line-height:1.3;color:#d0f3a7;letter-spacing:4px;font-family:monospace}
+.naddr-result-actions{display:flex;flex-wrap:wrap;gap:8px}.naddr-result-actions .btn{min-height:44px;padding:8px 16px;font-size:14px}
+.naddr-details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 24px;margin:18px 0 0}
+.naddr-details>div{padding:10px 0;border-top:1px solid #ffffff15;min-width:0}.naddr-details dt{font-size:13px;color:#a9bbac}.naddr-details dd{margin:0;font-size:17px;color:#e6f3d8;overflow-wrap:anywhere}[dir=rtl] .naddr-details dd[dir=ltr]{text-align:right}
+@media(max-width:900px){.naddr-grid{grid-template-columns:minmax(0,1fr)}.naddr-details{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.naddr-code-row{flex-direction:column}.naddr-code-row .btn{width:100%}.naddr-fields{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}.naddr-map-wrap{height:360px}.naddr-result-actions{width:100%}.naddr-result-actions .btn{flex:1}}
+@media(max-width:380px){.naddr-fields,.naddr-details{grid-template-columns:minmax(0,1fr)}}

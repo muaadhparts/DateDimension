@@ -21,24 +21,42 @@ function commit(): string {
  * hold either. It still blocks the realistic attack — an injected external
  * script — and locks down framing, base URIs, objects and form targets.
  */
-const CSP = [
-  "default-src 'self'",
-  "base-uri 'none'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  // The framework inlines its bootstrap, and the page inlines JSON-LD.
-  "script-src 'self' 'unsafe-inline'",
-  // The clock hands are positioned with inline style attributes.
-  "style-src 'self' 'unsafe-inline'",
-  "style-src-attr 'unsafe-inline'",
-  "img-src 'self' data:",
-  "font-src 'self'",
-  // Only same-origin: the prayer API and the geocoder are called server-side.
-  "connect-src 'self'",
-  'upgrade-insecure-requests',
-].join('; ');
+const csp = (extra: Partial<Record<string, string>> = {}) =>
+  [
+    "default-src 'self'",
+    "base-uri 'none'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    // The framework inlines its bootstrap, and the page inlines JSON-LD.
+    `script-src 'self' 'unsafe-inline'${extra.script ?? ''}`,
+    // The clock hands are positioned with inline style attributes.
+    `style-src 'self' 'unsafe-inline'${extra.style ?? ''}`,
+    "style-src-attr 'unsafe-inline'",
+    `img-src 'self' data:${extra.img ?? ''}`,
+    `font-src 'self'${extra.font ?? ''}`,
+    // Only same-origin: the prayer API and the geocoder are called server-side.
+    `connect-src 'self'${extra.connect ?? ''}`,
+    ...(extra.worker ? [`worker-src${extra.worker}`] : []),
+    'upgrade-insecure-requests',
+  ].join('; ');
 
+const CSP = csp();
+
+/**
+ * The national address page draws Google's map, which loads its script, tiles,
+ * fonts and a worker from Google's own hosts — the list Google documents for a
+ * strict CSP. Only this page gets it; every other page keeps the policy above.
+ */
+const GOOGLE = ' https://*.googleapis.com https://*.gstatic.com https://*.google.com';
+const MAPS_CSP = csp({
+  script: GOOGLE,
+  style: ' https://fonts.googleapis.com',
+  img: GOOGLE + ' https://*.googleusercontent.com https://*.ggpht.com blob:',
+  font: ' https://fonts.gstatic.com',
+  connect: GOOGLE + ' data: blob:',
+  worker: " 'self' blob:",
+});
 const nextConfig: NextConfig = {
   // Adds dist/standalone/server.js for the self-hosted Node deployment on
   // Laravel Forge. dist/server and dist/client are unchanged, so Cloudflare
@@ -54,6 +72,12 @@ const nextConfig: NextConfig = {
   // deployment, and CSP frame-ancestors supersedes it anyway.
   async headers() {
     return [
+      // vinext keeps the first value a header gets, so the narrower rule comes
+      // first and the site-wide rule below cannot replace it.
+      ...['/ar/national-address', '/en/national-address'].map((source) => ({
+        source,
+        headers: [{key: 'Content-Security-Policy', value: MAPS_CSP}],
+      })),
       {
         source: '/:path*',
         headers: [

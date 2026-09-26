@@ -12,6 +12,7 @@ import {dirname, join} from 'node:path';
  * already define.
  */
 let loaded = false;
+let loadedFrom: string | null = null;
 
 function candidatePaths(): string[] {
   // dist/standalone/dist/server -> ... -> the release root, which is where
@@ -61,6 +62,17 @@ export function loadServerEnv(): void {
     for (const [key, value] of Object.entries(parse(contents))) {
       if (process.env[key] === undefined) process.env[key] = value;
     }
+    loadedFrom = dirname(path);
     return;
   }
+}
+
+/**
+ * The directory holding the deployment's .env, or null when none was found.
+ * On Forge that is the site root, which outlives every release — the place for
+ * state that must survive a deployment.
+ */
+export function envDirectory(): string | null {
+  loadServerEnv();
+  return loadedFrom;
 }

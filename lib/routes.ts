@@ -9,7 +9,8 @@ export type RouteKey =
   | 'occasions'
   | 'months'
   | 'about'
-  | 'business-calculator';
+  | 'business-calculator'
+  | 'national-address';
 
 export type RouteContent = {
   key: RouteKey;
@@ -165,6 +166,24 @@ export const ROUTES: readonly RouteContent[] = [
     hasCityPages: false,
   },
   {
+    key: 'national-address',
+    nav: ['العنوان الوطني', 'National address'],
+    title: ['استخراج العنوان الوطني المختصر', 'Saudi short national address lookup'],
+    metaTitle: [
+      'استخراج العنوان الوطني والعنوان المختصر من الخريطة أو البيانات',
+      'Find a Saudi national address and short address from the map or its details',
+    ],
+    description: [
+      'فك العنوان الوطني المختصر مثل QBWA4294 إلى رقم المبنى والشارع والرقم الإضافي والحي والمدينة والرمز البريدي، أو استخرج العنوان المختصر من هذه البيانات أو من موقعك على الخريطة.',
+      'Decode a Saudi short national address such as QBWA4294 into building number, street, additional number, district, city and postal code, or get the short address from those details or from a point on the map.',
+    ],
+    intro: [
+      'من العنوان المختصر إلى البيانات، ومن البيانات أو الخريطة إلى العنوان المختصر.',
+      'From short address to full details, and from details or the map back to the short address.',
+    ],
+    hasCityPages: false,
+  },
+  {
     key: 'about',
     nav: ['عن الموقع', 'About'],
     title: ['المصادر ومنهجية الحساب', 'Sources & calculation methods'],
@@ -187,6 +206,7 @@ const NAV_ORDER = [
   '',
   'quran',
   'prayer-times',
+  'national-address',
   'months',
   'occasions',
   'business-calculator',
