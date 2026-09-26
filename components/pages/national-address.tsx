@@ -165,23 +165,31 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
       if (body.error === 'incomplete_fields') {
         if (body.field === 'building')
           return t(['اكتب رقم المبنى، وهو أربعة أرقام.', 'Enter the building number (4 digits).']);
-        if (body.field === 'street')
+        if (body.field === 'postalCode')
           return t([
-            'اكتب اسم الشارع؛ بدونه لا يمكن تحديد المبنى.',
-            'Enter the street name; the building cannot be found without it.',
+            'اكتب الرمز البريدي (خمسة أرقام)، أو اسم الشارع مع المدينة.',
+            'Enter the postal code (5 digits), or the street with the city.',
           ]);
-        return t(['اكتب المدينة أو الرمز البريدي.', 'Enter the city or the postal code.']);
+        return t([
+          'مع اسم الشارع اكتب المدينة أو الرمز البريدي.',
+          'With the street, enter the city or the postal code.',
+        ]);
       }
+      if (body.error === 'invalid_query')
+        return t([
+          'الصق العنوان المختصر أو رابط خرائط Google أو الإحداثيات.',
+          'Paste a short address, a Google Maps link or coordinates.',
+        ]);
       if (status === 404) {
         if (source === 'code')
           return t([
-            'لم يُعثر على عنوان بهذا الرمز. تأكد من الأحرف والأرقام.',
-            'No address has this code. Check the letters and digits.',
+            'لم نتعرف على عنوان من هذا. تأكد من العنوان المختصر أو الرابط أو الإحداثيات.',
+            'No address found for that. Check the short address, link or coordinates.',
           ]);
         if (source === 'fields')
           return t([
-            'لم نجد مبنى مطابقًا. راجع رقم المبنى واسم الشارع، أو حدد المبنى على الخريطة.',
-            'No matching building. Check the building number and street, or pick it on the map.',
+            'لم نجد مبنى بهذه البيانات. تأكد من رقم المبنى والرمز البريدي والرقم الإضافي، أو حدد المبنى على الخريطة.',
+            'No building matches. Check the building number, postal code and additional number, or pick it on the map.',
           ]);
         return t([
           'لا يوجد عنوان عند هذه النقطة. قرّب الخريطة واضغط على المبنى نفسه.',
@@ -235,25 +243,44 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
       resultRef.current?.scrollIntoView({behavior: 'smooth', block: 'nearest'}),
     );
 
+  /**
+   * The decode box takes a short address, or anything people share instead:
+   * a Google Maps link, coordinates, a plus code. Only the short address is
+   * recognised here; the server works out the rest.
+   */
   async function decode(value = code) {
-    const normal = normaliseShortCode(value);
-    if (!normal) {
+    const text = value.trim();
+    if (!text) {
       setMessage({
         source: 'code',
         kind: 'error',
-        text: errorText('code', 400, {error: 'invalid_code'}),
+        text: errorText('code', 400, {error: 'invalid_query'}),
       });
       return;
     }
-    setCode(normal);
-    const body = await request('code', {code: normal});
+    const normal = normaliseShortCode(text);
+    if (normal) setCode(normal);
+    const body = await request('code', normal ? {code: normal} : {q: text});
     if (!body?.data) return;
     apply(body.data);
-    setMessage({
-      source: 'code',
-      kind: 'ok',
-      text: t(['تم فك العنوان المختصر.', 'Short address decoded.']),
-    });
+    setMessage(
+      body.data.shortCode
+        ? {
+            source: 'code',
+            kind: 'ok',
+            text: normal
+              ? t(['تم فك العنوان المختصر.', 'Short address decoded.'])
+              : t(['تم استخراج العنوان من الموقع.', 'Address found for that location.']),
+          }
+        : {
+            source: 'code',
+            kind: 'warn',
+            text: t([
+              'وُجد الموقع لكن بلا عنوان مختصر. حرّك الدبوس إلى المبنى نفسه على الخريطة.',
+              'Found the place but no short address. Move the pin onto the building itself.',
+            ]),
+          },
+    );
   }
 
   async function encode() {
@@ -420,6 +447,29 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
     );
   }
 
+  async function pickPlace(placeId: string) {
+    const body = await request('map', {place: placeId});
+    if (!body?.data) return;
+    apply(body.data);
+    setMessage(
+      body.data.shortCode
+        ? {
+            source: 'map',
+            kind: 'ok',
+            text: t(['تم تحديد المكان على الخريطة.', 'Place found on the map.']),
+          }
+        : {
+            source: 'map',
+            kind: 'warn',
+            text: t([
+              'وُجد المكان لكن بلا عنوان مختصر. اضغط على المبنى نفسه في الخريطة.',
+              'Found the place but no short address. Tap the building itself on the map.',
+            ]),
+          },
+    );
+    showResult();
+  }
+
   function reset() {
     setCode('');
     setFields(EMPTY);
@@ -474,21 +524,30 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
           <h2 id="naddr-code-title">{t(['فك العنوان المختصر', 'Decode a short address'])}</h2>
           <label className="sub" htmlFor="naddr-code">
             {t([
-              'أربعة أحرف ثم أربعة أرقام، كما في شهادة العنوان الوطني أو لوحة المبنى.',
-              'Four letters then four digits, as on the national address certificate or the building plate.',
+              'العنوان المختصر مثل QBWA4294، أو الصق رابط موقع من خرائط Google أو الواتساب، أو إحداثيات، أو رمزًا مثل 8XW2+P7X.',
+              'A short address such as QBWA4294, or paste a Google Maps or WhatsApp location link, coordinates, or a plus code like 8XW2+P7X.',
             ])}
           </label>
           <div className="naddr-code-row">
             <input
               id="naddr-code"
-              dir="ltr"
+              dir="auto"
+              className={normaliseShortCode(code) ? 'is-code' : undefined}
               value={code}
-              maxLength={10}
-              placeholder="QBWA4294"
+              maxLength={600}
+              placeholder="QBWA4294 · https://maps.app.goo.gl/…"
               autoComplete="off"
-              autoCapitalize="characters"
               spellCheck={false}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              onChange={(e) => setCode(e.target.value)}
+              onPaste={(e) => {
+                // A pasted link or location is looked up straight away.
+                const pasted = e.clipboardData.getData('text');
+                if (pasted.trim().length > 10) {
+                  e.preventDefault();
+                  setCode(pasted.trim());
+                  void decode(pasted);
+                }
+              }}
               aria-invalid={message?.source === 'code' && message.kind === 'error'}
             />
             <button className="btn" type="submit" disabled={busy !== null}>
@@ -574,8 +633,8 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
           <h2 id="naddr-fields-title">{t(['بيانات العنوان', 'Address details'])}</h2>
           <p className="sub">
             {t([
-              'للتوليد يكفي رقم المبنى والشارع والمدينة أو الرمز البريدي. تمتلئ البيانات تلقائيًا عند فك الرمز أو اختيار موقع على الخريطة.',
-              'To generate, the building number, street and city or postal code are enough. The fields fill in by themselves from a code or the map.',
+              'يكفي رقم المبنى والرمز البريدي، ومعهما الرقم الإضافي للتأكد. اسم الشارع اختياري. تمتلئ البيانات تلقائيًا عند فك الرمز أو اختيار موقع على الخريطة.',
+              'The building number and postal code are enough, with the additional number to confirm. The street is optional. The fields also fill in from a code or the map.',
             ])}
           </p>
           <form
@@ -613,6 +672,14 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
                 {t(['مسح الكل', 'Clear all'])}
               </button>
             </div>
+            {busy === 'fields' && (
+              <p className="naddr-note" role="status">
+                {t([
+                  'جارٍ البحث… قد يستغرق البحث بالأرقام وحدها بضع ثوانٍ.',
+                  'Searching… a search by numbers alone can take a few seconds.',
+                ])}
+              </p>
+            )}
             {note('fields')}
           </form>
         </section>
@@ -630,10 +697,11 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
               {t(['موقعي الحالي', 'My location'])}
             </button>
           </div>
+          <PlaceSearch lang={lang} t={t} disabled={busy !== null} onPick={pickPlace} />
           <p className="sub">
             {t([
-              'اضغط على المبنى أو اسحب الدبوس، فتمتلئ البيانات والعنوان المختصر.',
-              'Tap the building or drag the pin to fill in the details and the short address.',
+              'ابحث عن مكان، أو اضغط على المبنى أو اسحب الدبوس، فتمتلئ البيانات والعنوان المختصر.',
+              'Search for a place, or tap the building or drag the pin, to fill in the details and the short address.',
             ])}
           </p>
           {/* Google owns everything inside the map element, so React renders
@@ -699,6 +767,139 @@ export default function NationalAddressPage({lang}: {lang: Lang}) {
           </p>
         </details>
       </section>
+    </div>
+  );
+}
+
+type Suggestion = {id: string; main: string; secondary: string};
+
+/**
+ * Place search above the map. Suggestions come through this site's own API,
+ * which calls Google Places; one session token per search keeps Google's
+ * billing to a session rather than every keystroke.
+ */
+function PlaceSearch({
+  lang,
+  t,
+  disabled,
+  onPick,
+}: {
+  lang: Lang;
+  t: (label: Label) => string;
+  disabled: boolean;
+  onPick: (placeId: string) => Promise<void>;
+}) {
+  const [input, setInput] = useState('');
+  const [items, setItems] = useState<Suggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(-1);
+  const [failed, setFailed] = useState(false);
+  const session = useRef('');
+
+  useEffect(() => {
+    const query = input.trim();
+    if (query.length < 2) return;
+    // Wait for a pause in typing before asking.
+    const timer = setTimeout(async () => {
+      session.current ||= crypto.randomUUID();
+      try {
+        const response = await fetch(
+          '/api/national-address/places?' +
+            new URLSearchParams({input: query, lang, session: session.current}),
+        );
+        const body = (await response.json()) as {data?: Suggestion[]};
+        setItems(body.data ?? []);
+        setFailed(!response.ok);
+        setOpen(true);
+        setActive(-1);
+      } catch {
+        setFailed(true);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [input, lang]);
+
+  function choose(item: Suggestion) {
+    setInput(item.main);
+    setOpen(false);
+    setItems([]);
+    session.current = '';
+    void onPick(item.id);
+  }
+
+  const listId = 'naddr-place-list';
+  return (
+    <div className="naddr-search">
+      <label className="sr-only" htmlFor="naddr-place">
+        {t(['ابحث عن مكان', 'Search for a place'])}
+      </label>
+      <Search size={18} aria-hidden="true" />
+      <input
+        id="naddr-place"
+        type="search"
+        role="combobox"
+        aria-expanded={open && items.length > 0}
+        aria-controls={listId}
+        aria-autocomplete="list"
+        aria-activedescendant={active >= 0 ? `${listId}-${active}` : undefined}
+        value={input}
+        disabled={disabled}
+        maxLength={120}
+        autoComplete="off"
+        placeholder={t(['ابحث عن مكان أو حي أو شارع…', 'Search a place, district or street…'])}
+        onChange={(e) => {
+          setInput(e.target.value);
+          if (e.target.value.trim().length < 2) {
+            setItems([]);
+            setOpen(false);
+          }
+        }}
+        onFocus={() => {
+          if (items.length) setOpen(true);
+        }}
+        onBlur={() => setTimeout(() => setOpen(false), 150)}
+        onKeyDown={(e) => {
+          if (!open || !items.length) return;
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            setActive((i) => (i + 1) % items.length);
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            setActive((i) => (i <= 0 ? items.length - 1 : i - 1));
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            choose(items[Math.max(active, 0)]);
+          } else if (e.key === 'Escape') {
+            setOpen(false);
+          }
+        }}
+      />
+      {open && (items.length > 0 || failed) && (
+        <ul className="naddr-suggestions" id={listId} role="listbox">
+          {failed ? (
+            <li className="naddr-suggestion-empty">
+              {t(['البحث غير متاح الآن.', 'Search is unavailable right now.'])}
+            </li>
+          ) : (
+            items.map((item, i) => (
+              <li
+                key={item.id}
+                id={`${listId}-${i}`}
+                role="option"
+                aria-selected={i === active}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => choose(item)}
+              >
+                <MapPin size={16} aria-hidden="true" />
+                <span>
+                  <b>{item.main}</b>
+                  {item.secondary && <small>{item.secondary}</small>}
+                </span>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
     </div>
   );
 }

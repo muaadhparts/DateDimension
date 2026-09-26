@@ -82,18 +82,23 @@ export function cleanFields(input: Partial<Record<keyof AddressFields, unknown>>
 }
 
 /**
- * What a lookup from fields needs: the building number, the street it stands
- * on, and a city or postal code to find that street in. A district without a
- * street is not enough — Google then answers with the district's centre, not a
- * building (checked live: `4294 حي المنتزه، بريدة` is APPROXIMATE, while
- * `4294 طريق الملك فهد 52381` is the ROOFTOP of QBWA4294).
+ * What a lookup from fields needs. The building number always — the four
+ * digits of the short address are the building number. Then either the postal
+ * code, which is searched by numbers alone (see searchByNumbers), or a street
+ * with a city to find it in. The numbers are what people copy reliably; names
+ * are often misspelt, so they are never required.
  */
 export function fieldsProblem(fields: AddressFields): keyof AddressFields | null {
   if (fields.building.length !== 4) return 'building';
-  if (!fields.street) return 'street';
-  if (!fields.city && fields.postalCode.length !== 5) return 'city';
+  if (fields.postalCode.length === 5) return null;
+  if (!fields.street) return 'postalCode';
+  if (!fields.city) return 'city';
   return null;
 }
+
+/** Whether the cheap one-call lookup by written address can be tried. */
+export const hasWrittenAddress = (fields: AddressFields) =>
+  !!fields.street && (!!fields.city || fields.postalCode.length === 5);
 
 /** The written address Google is asked to find. */
 export function addressQuery(fields: AddressFields, lang: Lang): string {
@@ -140,7 +145,9 @@ export function parseResult(result: GeocodeResult): NationalAddress {
   const lon = result.geometry?.location?.lng;
   return {
     shortCode: shortCodeOf(result),
-    building: component(components, 'street_number'),
+    // Some buildings carry the short address but no street number; its last
+    // four digits are the building number.
+    building: component(components, 'street_number') || shortCodeOf(result)?.slice(4) || '',
     street: component(components, 'route'),
     additional: suffix || (/^\d{4}$/.test(subpremise) ? subpremise : ''),
     district,
@@ -177,4 +184,120 @@ export function mismatches(typed: AddressFields, found: NationalAddress): (keyof
   return (['building', 'additional', 'postalCode'] as const).filter(
     (key) => typed[key] !== '' && found[key] !== '' && typed[key] !== found[key],
   );
+}
+
+/** Whether a found building agrees with every number the visitor typed. */
+export function matchesNumbers(typed: AddressFields, found: NationalAddress): boolean {
+  return (
+    found.shortCode?.slice(4) === typed.building &&
+    (typed.postalCode === '' || found.postalCode === typed.postalCode) &&
+    (typed.additional === '' || found.additional === typed.additional)
+  );
+}
+
+// ---- Free input for the decode box: codes, links, coordinates, plus codes ----
+
+export type LatLon = {lat: number; lon: number};
+
+/** A short address anywhere in the text, e.g. inside a pasted message. */
+export function findShortCode(text: string): string | null {
+  const match = latinDigits(text)
+    .toUpperCase()
+    .match(/(?:^|[^A-Z0-9])([A-Z]{4})[\s-]?([0-9]{4})(?![0-9])/);
+  return match ? match[1] + match[2] : null;
+}
+
+const inRange = (lat: number, lon: number) =>
+  Number.isFinite(lat) && Number.isFinite(lon) && Math.abs(lat) <= 90 && Math.abs(lon) <= 180;
+
+/**
+ * Saudi Arabia lies between 16° and 33° N and 34° and 56° E, so a pair that is
+ * only valid the other way round — which is how right-to-left text often
+ * pastes it — is swapped.
+ */
+function ordered(a: number, b: number): LatLon | null {
+  const saudi = (lat: number, lon: number) => lat >= 15 && lat <= 34 && lon >= 33 && lon <= 57;
+  if (saudi(b, a) && !saudi(a, b)) return {lat: b, lon: a};
+  return inRange(a, b) ? {lat: a, lon: b} : null;
+}
+
+/** 26°20'49.0"N 43°57'02.6"E, in either order and with any quote marks. */
+function degreesMinutesSeconds(text: string): LatLon | null {
+  const parts = [
+    ...text.matchAll(
+      /(\d{1,3})\s*°\s*(\d{1,2})\s*['′’]\s*(\d{1,2}(?:\.\d+)?)\s*(?:["″”]|'')?\s*([NSEW])/gi,
+    ),
+  ];
+  let lat: number | null = null;
+  let lon: number | null = null;
+  for (const [, d, m, sec, hemi] of parts) {
+    const value = Number(d) + Number(m) / 60 + Number(sec) / 3600;
+    const h = hemi.toUpperCase();
+    if (h === 'N' || h === 'S') lat = h === 'S' ? -value : value;
+    else lon = h === 'W' ? -value : value;
+  }
+  return lat !== null && lon !== null && inRange(lat, lon) ? {lat, lon} : null;
+}
+
+/** Decimal coordinates such as `26.346944, 43.950722`, or DMS. */
+export function parseCoordinates(text: string): LatLon | null {
+  const latin = latinDigits(text).replace(/٫/g, '.');
+  const decimal = latin.match(/(-?\d{1,3}\.\d{3,})\s*[,،؛;\s]\s*(-?\d{1,3}\.\d{3,})/);
+  if (decimal) {
+    const pair = ordered(Number(decimal[1]), Number(decimal[2]));
+    if (pair) return pair;
+  }
+  return degreesMinutesSeconds(latin);
+}
+
+/** A plus code (8XW2+P7X, 7HR58XW2+P7X) somewhere in the text. */
+export const PLUS_CODE = /[23456789CFGHJMPQRVWX]{4,8}\+[23456789CFGHJMPQRVWX]{2,3}/i;
+
+export const findUrl = (text: string): string | null =>
+  text.match(/https?:\/\/[^\s<>"'،]+/i)?.[0] ?? null;
+
+/** Only Google's own map hosts are ever fetched, so a pasted link cannot aim the server elsewhere. */
+export function isGoogleMapsUrl(value: string): boolean {
+  let url: URL;
+  try {
+    url = new URL(value);
+  } catch {
+    return false;
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return false;
+  const host = url.hostname.toLowerCase();
+  return (
+    host === 'maps.app.goo.gl' ||
+    host === 'goo.gl' ||
+    host === 'g.co' ||
+    host === 'maps.google.com' ||
+    /^(www\.)?google\.[a-z.]{2,6}$/.test(host)
+  );
+}
+
+/**
+ * The place a Google Maps URL points at. `!3d…!4d…` is the pin itself and wins
+ * over `@lat,lng`, which is only where the view was centred — for a shared
+ * place the two can be kilometres apart.
+ */
+export function coordinatesFromMapsUrl(value: string): LatLon | null {
+  const text = decodeURIComponent(value.replace(/\+/g, ' '));
+  const pin = text.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/);
+  if (pin) return ordered(Number(pin[1]), Number(pin[2]));
+  const query = text.match(/[?&](?:q|query|ll|destination|center)=(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)/);
+  if (query) return ordered(Number(query[1]), Number(query[2]));
+  const view = text.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
+  if (view) return ordered(Number(view[1]), Number(view[2]));
+  return null;
+}
+
+/** The place name in a /maps/place/NAME/ URL, for when there are no coordinates. */
+export function placeNameFromMapsUrl(value: string): string | null {
+  const match = value.match(/\/maps\/place\/([^/@?]+)/);
+  if (!match) return null;
+  const name = decodeURIComponent(match[1].replace(/\+/g, ' '))
+    // Invisible format characters, such as the direction marks Google appends.
+    .replace(/\p{Cf}/gu, '')
+    .trim();
+  return name || null;
 }
