@@ -1,5 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+// No Google key, whatever the machine running the tests has configured: the
+// national address endpoint must answer from validation alone, never the network.
+process.env.GOOGLE_MAPS_API_KEY = '';
+process.env.APP_KEY = '';
+process.env.CREDENTIALS_DB = 'missing/credentials.sqlite';
 const {default: worker} = await import('../../dist/server/index.js');
 async function request(path) {
   return worker.fetch(
@@ -33,7 +38,14 @@ test('Arabic and English content, direction, canonical, hreflang and structured 
   }
 });
 test('Task pages render useful content before JavaScript', async () => {
-  for (const page of ['converter', 'months', 'occasions', 'about', 'business-calculator']) {
+  for (const page of [
+    'converter',
+    'months',
+    'occasions',
+    'about',
+    'business-calculator',
+    'national-address',
+  ]) {
     const r = await request('/en/' + page);
     assert.equal(r.status, 200);
     const html = await r.text();
@@ -46,10 +58,32 @@ test('Sitemap is finite, API inputs are validated and private preview cannot be 
   const sitemap = await request('/sitemap.xml');
   assert.equal(sitemap.status, 200);
   const xml = await sitemap.text();
-  assert.equal((xml.match(/<loc>/g) || []).length, 1468);
+  assert.equal((xml.match(/<loc>/g) || []).length, 1470);
   const robots = await request('/robots.txt');
   assert.equal(robots.status, 200);
   assert.match(await robots.text(), /Disallow: \//);
   const invalid = await request('/api/prayers?date=2026-02-31&city=Riyadh&country=Saudi+Arabia');
   assert.equal(invalid.status, 400);
+});
+test('National address lookups validate their input before any Google call', async () => {
+  const json = async (path) => {
+    const r = await request(path);
+    assert.equal(r.headers.get('cache-control'), 'no-store', path);
+    return {status: r.status, body: await r.json()};
+  };
+  assert.deepEqual(await json('/api/national-address?code=QBW4294'), {
+    status: 400,
+    body: {error: 'invalid_code', field: 'code'},
+  });
+  assert.equal((await json('/api/national-address?lat=91&lon=10')).body.error, 'invalid_point');
+  assert.deepEqual(await json('/api/national-address?building=42&city=x&street=y'), {
+    status: 400,
+    body: {error: 'incomplete_fields', field: 'building'},
+  });
+  // Well-formed, but this build has no key: 503, not a crash or a leak.
+  assert.deepEqual(await json('/api/national-address?code=qbwa-4294'), {
+    status: 503,
+    body: {error: 'not_configured'},
+  });
+  assert.equal((await json('/api/national-address/map?lang=ar')).status, 503);
 });

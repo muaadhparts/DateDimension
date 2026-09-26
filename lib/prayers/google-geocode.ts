@@ -1,5 +1,5 @@
 import tzLookup from '@photostructure/tz-lookup';
-import {loadServerEnv} from '../server-env.ts';
+import {googleMapsKey} from '../google-key.ts';
 import {normalise, type CityCoordinates} from './coordinates.ts';
 import {PrayerDataUnavailable} from './types.ts';
 
@@ -25,10 +25,7 @@ export type ResolvedPlace = CityCoordinates & {
  * curated list does not cover. The key is server-side only — the browser never
  * sees it, and this endpoint is the only thing that can spend it.
  */
-function apiKey(): string | null {
-  loadServerEnv();
-  return process.env.GOOGLE_MAPS_API_KEY?.trim() || null;
-}
+const apiKey = googleMapsKey;
 
 export const googleGeocodingAvailable = () => apiKey() !== null;
 

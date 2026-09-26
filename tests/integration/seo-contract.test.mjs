@@ -47,6 +47,7 @@ test('Canonical, hreflang and x-default carry the real origin and point at each 
     ['/en', '/ar'],
     ['/ar/converter', '/en/converter'],
     ['/ar/business-calculator', '/en/business-calculator'],
+    ['/ar/national-address', '/en/national-address'],
     ['/en/prayer-times/london', '/ar/prayer-times/london'],
   ]) {
     const body = await html(path);
@@ -106,8 +107,8 @@ test('The sitemap lists exactly the routes that exist, on the real origin', asyn
 
   // 8 section pages + 8 cities + 114 surahs + 604 mushaf pages, per language.
   // Bare /mushaf is left out: it only opens page 1, which is listed already.
-  assert.equal(urls.length, 1468);
-  assert.equal(new Set(urls).size, 1468, 'no duplicates');
+  assert.equal(urls.length, 1470);
+  assert.equal(new Set(urls).size, 1470, 'no duplicates');
   assert.ok(
     urls.every((url) => url.startsWith(`${ORIGIN}/`)),
     'every URL uses the real origin',
@@ -117,13 +118,14 @@ test('The sitemap lists exactly the routes that exist, on the real origin', asyn
   for (const lang of ['ar', 'en']) {
     assert.equal(
       urls.filter((url) => url.startsWith(`${ORIGIN}/${lang}`)).length,
-      734,
-      `${lang} has 734 URLs`,
+      735,
+      `${lang} has 735 URLs`,
     );
     for (const path of [
       '',
       '/converter',
       '/business-calculator',
+      '/national-address',
       '/prayer-times',
       '/quran',
       '/quran/114',

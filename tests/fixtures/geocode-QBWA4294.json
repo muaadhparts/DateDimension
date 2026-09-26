@@ -1,0 +1,131 @@
+{
+  "status": "OK",
+  "results": [
+    {
+      "formatted_address": "QBWA4294، 4294 طريق الملك فهد، 6309، حي المنتزه، بريدة 52381، السعودية",
+      "types": ["premise", "street_address"],
+      "address_components": [
+        {
+          "long_name": "4294",
+          "short_name": "4294",
+          "types": ["street_number"]
+        },
+        {
+          "long_name": "QBWA4294",
+          "short_name": "QBWA4294",
+          "types": ["premise"]
+        },
+        {
+          "long_name": "طريق الملك فهد",
+          "short_name": "طريق الملك فهد",
+          "types": ["route"]
+        },
+        {
+          "long_name": "حي المنتزه",
+          "short_name": "حي المنتزه",
+          "types": ["political", "sublocality", "sublocality_level_1"]
+        },
+        {
+          "long_name": "بريدة",
+          "short_name": "بريدة",
+          "types": ["locality", "political"]
+        },
+        {
+          "long_name": "بريدة",
+          "short_name": "بريدة",
+          "types": ["administrative_area_level_2", "political"]
+        },
+        {
+          "long_name": "منطقة القصيم",
+          "short_name": "منطقة القصيم",
+          "types": ["administrative_area_level_1", "political"]
+        },
+        {
+          "long_name": "السعودية",
+          "short_name": "SA",
+          "types": ["country", "political"]
+        },
+        {
+          "long_name": "52381",
+          "short_name": "52381",
+          "types": ["postal_code"]
+        },
+        {
+          "long_name": "6309",
+          "short_name": "6309",
+          "types": ["postal_code_suffix"]
+        }
+      ],
+      "geometry": {
+        "location": {
+          "lat": 26.3468863,
+          "lng": 43.950986
+        },
+        "location_type": "ROOFTOP"
+      }
+    },
+    {
+      "formatted_address": "QBWA4294، 4294 المرقب 12، 6309، حي الزهرة، بريدة 52381، السعودية",
+      "types": ["street_address"],
+      "address_components": [
+        {
+          "long_name": "4294",
+          "short_name": "4294",
+          "types": ["street_number"]
+        },
+        {
+          "long_name": "QBWA4294",
+          "short_name": "QBWA4294",
+          "types": ["premise"]
+        },
+        {
+          "long_name": "المرقب 12",
+          "short_name": "المرقب 12",
+          "types": ["route"]
+        },
+        {
+          "long_name": "حي الزهرة",
+          "short_name": "حي الزهرة",
+          "types": ["political", "sublocality", "sublocality_level_1"]
+        },
+        {
+          "long_name": "بريدة",
+          "short_name": "بريدة",
+          "types": ["locality", "political"]
+        },
+        {
+          "long_name": "بريدة",
+          "short_name": "بريدة",
+          "types": ["administrative_area_level_2", "political"]
+        },
+        {
+          "long_name": "منطقة القصيم",
+          "short_name": "منطقة القصيم",
+          "types": ["administrative_area_level_1", "political"]
+        },
+        {
+          "long_name": "السعودية",
+          "short_name": "SA",
+          "types": ["country", "political"]
+        },
+        {
+          "long_name": "52381",
+          "short_name": "52381",
+          "types": ["postal_code"]
+        },
+        {
+          "long_name": "6309",
+          "short_name": "6309",
+          "types": ["postal_code_suffix"]
+        }
+      ],
+      "geometry": {
+        "location": {
+          "lat": 26.3467977,
+          "lng": 43.9508291
+        },
+        "location_type": "ROOFTOP"
+      }
+    }
+  ]
+}
