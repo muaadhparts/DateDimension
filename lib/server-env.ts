@@ -1,4 +1,4 @@
-import {readFileSync} from 'node:fs';
+import {readFileSync, realpathSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 
 /**
@@ -62,7 +62,9 @@ export function loadServerEnv(): void {
     for (const [key, value] of Object.entries(parse(contents))) {
       if (process.env[key] === undefined) process.env[key] = value;
     }
-    loadedFrom = dirname(path);
+    // Forge links .env into every release; the directory that outlives the
+    // release is where the link points, not where it sits.
+    loadedFrom = dirname(realpathSync(path));
     return;
   }
 }
