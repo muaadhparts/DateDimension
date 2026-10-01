@@ -39,7 +39,7 @@ jobs:
 
       - name: Open or update an issue when it is not
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const title = 'yourdaynow.online is not answering';
